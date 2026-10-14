@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "regions": ["iad1"],
+  "functions": {
+    "app/main.py": {
+      "maxDuration": 300,
+      "includeFiles": "{models/**,frontend/dist/**,samples/**,research/results/fixture_metrics.json}",
+      "excludeFiles": "{tmp/**,tests/**,docs/**,.env*,frontend/node_modules/**,research/private-runs/**}"
+    }
+  }
+}
+

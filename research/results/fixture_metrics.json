@@ -1,0 +1,397 @@
+{
+  "status": "complete",
+  "evaluation_type": "authored_diagnostic_fixture",
+  "run_date": "2026-10-14T17:26:01.278938+00:00",
+  "sample_count": 24,
+  "dataset_sha256": "ea9e9a32e25bd1f5e7c94f59b7f09c91658acb30bd2a1abef92a3dfdaeaca2bb",
+  "model": "Xenova/nli-deberta-v3-xsmall",
+  "thresholds": {
+    "support": 0.8,
+    "contradiction": 0.85
+  },
+  "macro_f1": 0.8704453441295547,
+  "per_class": [
+    {
+      "label": "supported",
+      "precision": 1.0,
+      "recall": 0.625,
+      "f1": 0.7692307692307693,
+      "n": 8
+    },
+    {
+      "label": "contradicted",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "n": 8
+    },
+    {
+      "label": "insufficient",
+      "precision": 0.7272727272727273,
+      "recall": 1.0,
+      "f1": 0.8421052631578948,
+      "n": 8
+    }
+  ],
+  "confusion_matrix": [
+    [
+      5,
+      0,
+      3
+    ],
+    [
+      0,
+      8,
+      0
+    ],
+    [
+      0,
+      0,
+      8
+    ]
+  ],
+  "label_order": [
+    "supported",
+    "contradicted",
+    "insufficient"
+  ],
+  "wall_ms_including_model_load": 1048.7286119999908,
+  "hardware": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "python": "3.12.14",
+    "device": "CPU, one ONNX thread"
+  },
+  "predictions": [
+    {
+      "id": "s01",
+      "evidence": "The trial enrolled 120 adults.",
+      "claim": "There were 120 adult participants in the trial.",
+      "label": "supported",
+      "prediction": "supported",
+      "scores": {
+        "contradiction": 0.0006125466140534556,
+        "entailment": 0.9946765520144275,
+        "neutral": 0.004710901371518999
+      }
+    },
+    {
+      "id": "s02",
+      "evidence": "The intervention lasted six weeks.",
+      "claim": "Participants received the intervention for six weeks.",
+      "label": "supported",
+      "prediction": "supported",
+      "scores": {
+        "contradiction": 0.00037128156320385703,
+        "entailment": 0.9929228531573595,
+        "neutral": 0.006705865279436631
+      }
+    },
+    {
+      "id": "s03",
+      "evidence": "The control group improved its attention score by 2 points.",
+      "claim": "The control group had a 2-point improvement in attention score.",
+      "label": "supported",
+      "prediction": "supported",
+      "scores": {
+        "contradiction": 0.0005059677766310015,
+        "entailment": 0.9961750770160337,
+        "neutral": 0.003318955207335312
+      }
+    },
+    {
+      "id": "s04",
+      "evidence": "The study was observational and cannot establish causation.",
+      "claim": "The study cannot establish a causal relationship.",
+      "label": "supported",
+      "prediction": "supported",
+      "scores": {
+        "contradiction": 0.0003934407998909963,
+        "entailment": 0.9896777079123887,
+        "neutral": 0.009928851287720381
+      }
+    },
+    {
+      "id": "s05",
+      "evidence": "No children were recruited for the trial.",
+      "claim": "Children were excluded from the trial.",
+      "label": "supported",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.6312910068324107,
+        "entailment": 0.21854196813594792,
+        "neutral": 0.15016702503164145
+      }
+    },
+    {
+      "id": "s06",
+      "evidence": "The trial took place at a single university.",
+      "claim": "The research was conducted at one university.",
+      "label": "supported",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0388391362156282,
+        "entailment": 0.5958723675334867,
+        "neutral": 0.36528849625088516
+      }
+    },
+    {
+      "id": "s07",
+      "evidence": "The treatment did not improve attention compared with the control group.",
+      "claim": "There was no improvement in attention relative to the control group.",
+      "label": "supported",
+      "prediction": "supported",
+      "scores": {
+        "contradiction": 0.0008130941816351343,
+        "entailment": 0.9941750511058375,
+        "neutral": 0.005011854712527362
+      }
+    },
+    {
+      "id": "s08",
+      "evidence": "Average nightly sleep increased from 6.2 hours to 7.5 hours.",
+      "claim": "After the intervention, average nightly sleep was 7.5 hours.",
+      "label": "supported",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0005147308037080434,
+        "entailment": 0.0011968331976288083,
+        "neutral": 0.9982884359986632
+      }
+    },
+    {
+      "id": "c01",
+      "evidence": "The trial enrolled 120 adults.",
+      "claim": "The trial enrolled 300 adults.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9987609356697199,
+        "entailment": 0.0003907964537873251,
+        "neutral": 0.000848267876492627
+      }
+    },
+    {
+      "id": "c02",
+      "evidence": "The intervention lasted six weeks.",
+      "claim": "The intervention lasted twelve weeks.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9990735905436043,
+        "entailment": 0.00025939968411183196,
+        "neutral": 0.0006670097722839228
+      }
+    },
+    {
+      "id": "c03",
+      "evidence": "No children were recruited for the trial.",
+      "claim": "The trial recruited children.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9948363647684454,
+        "entailment": 0.0020718879072631753,
+        "neutral": 0.0030917473242913717
+      }
+    },
+    {
+      "id": "c04",
+      "evidence": "The study was observational, not randomized.",
+      "claim": "The study was a randomized trial.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9957288087054647,
+        "entailment": 0.0008917556719024234,
+        "neutral": 0.0033794356226329696
+      }
+    },
+    {
+      "id": "c05",
+      "evidence": "The reanalysis found no improvement in attention compared with the control group.",
+      "claim": "The reanalysis found improved attention compared with the control group.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.997660930901882,
+        "entailment": 0.0007048421285143506,
+        "neutral": 0.001634226969603641
+      }
+    },
+    {
+      "id": "c06",
+      "evidence": "The research was conducted at a single university.",
+      "claim": "The research was conducted at five universities.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9992298221761555,
+        "entailment": 8.398325832369112e-05,
+        "neutral": 0.000686194565520707
+      }
+    },
+    {
+      "id": "c07",
+      "evidence": "Average nightly sleep was 7.5 hours after the intervention.",
+      "claim": "Average nightly sleep was 9 hours after the intervention.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9841298582876855,
+        "entailment": 0.0019190597156523677,
+        "neutral": 0.013951081996661972
+      }
+    },
+    {
+      "id": "c08",
+      "evidence": "The corrected attention score improved by 2 points, not 12 points.",
+      "claim": "The corrected attention score improved by 12 points.",
+      "label": "contradicted",
+      "prediction": "contradicted",
+      "scores": {
+        "contradiction": 0.9895798099757125,
+        "entailment": 0.002224018942003853,
+        "neutral": 0.008196171082283675
+      }
+    },
+    {
+      "id": "n01",
+      "evidence": "The trial enrolled 120 adults.",
+      "claim": "The trial was funded by a pharmaceutical company.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0010215192474159443,
+        "entailment": 0.00031720206229356954,
+        "neutral": 0.9986612786902904
+      }
+    },
+    {
+      "id": "n02",
+      "evidence": "The intervention lasted six weeks.",
+      "claim": "The intervention reduced mortality.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0005525434910965033,
+        "entailment": 0.0006599738690219267,
+        "neutral": 0.9987874826398816
+      }
+    },
+    {
+      "id": "n03",
+      "evidence": "The control group improved its attention score by 2 points.",
+      "claim": "The control group slept for eight hours each night.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.8176946383294055,
+        "entailment": 0.0003481662956756429,
+        "neutral": 0.18195719537491878
+      }
+    },
+    {
+      "id": "n04",
+      "evidence": "The participants were adults aged 18 to 30.",
+      "claim": "The participants lived in Canada.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0012251954807664628,
+        "entailment": 0.0004585866496080712,
+        "neutral": 0.9983162178696255
+      }
+    },
+    {
+      "id": "n05",
+      "evidence": "The study was conducted at one university.",
+      "claim": "The study was conducted in 2024.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.06706795392919998,
+        "entailment": 0.0005200262325796382,
+        "neutral": 0.9324120198382203
+      }
+    },
+    {
+      "id": "n06",
+      "evidence": "The report measured attention scores after six weeks.",
+      "claim": "The intervention improved exam grades.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.028146551921085384,
+        "entailment": 0.007050648224063266,
+        "neutral": 0.9648027998548514
+      }
+    },
+    {
+      "id": "n07",
+      "evidence": "The project observed 85 adults over four weeks.",
+      "claim": "The project collected blood samples.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.003669416177710881,
+        "entailment": 0.0010469785087651078,
+        "neutral": 0.9952836053135241
+      }
+    },
+    {
+      "id": "n08",
+      "evidence": "The intervention increased average sleep duration.",
+      "claim": "The intervention was inexpensive.",
+      "label": "insufficient",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.000983825824313795,
+        "entailment": 0.0003237880574621222,
+        "neutral": 0.9986923861182242
+      }
+    }
+  ],
+  "failures": [
+    {
+      "id": "s05",
+      "evidence": "No children were recruited for the trial.",
+      "claim": "Children were excluded from the trial.",
+      "label": "supported",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.6312910068324107,
+        "entailment": 0.21854196813594792,
+        "neutral": 0.15016702503164145
+      }
+    },
+    {
+      "id": "s06",
+      "evidence": "The trial took place at a single university.",
+      "claim": "The research was conducted at one university.",
+      "label": "supported",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0388391362156282,
+        "entailment": 0.5958723675334867,
+        "neutral": 0.36528849625088516
+      }
+    },
+    {
+      "id": "s08",
+      "evidence": "Average nightly sleep increased from 6.2 hours to 7.5 hours.",
+      "claim": "After the intervention, average nightly sleep was 7.5 hours.",
+      "label": "supported",
+      "prediction": "insufficient",
+      "scores": {
+        "contradiction": 0.0005147308037080434,
+        "entailment": 0.0011968331976288083,
+        "neutral": 0.9982884359986632
+      }
+    }
+  ],
+  "limitations": [
+    "Small, authored, non-blinded diagnostic fixture; not a held-out benchmark.",
+    "This measures NLI labels, not full RAG answer quality or hallucination reduction.",
+    "No confidence interval is reported: this convenience set is not a representative random sample."
+  ]
+}

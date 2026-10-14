@@ -1,0 +1,13 @@
+fastapi==0.143.0
+uvicorn==0.54.0
+psycopg[binary,pool]==3.3.6
+pgvector==0.5.1
+pypdf==6.20.1
+python-multipart==0.0.32
+httpx[socks]==0.28.1
+model2vec==0.10.0
+onnxruntime==1.31.0
+tokenizers==0.23.3
+numpy==2.5.4
+python-dotenv==1.2.4
+

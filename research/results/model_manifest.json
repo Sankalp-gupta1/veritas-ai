@@ -1,0 +1,56 @@
+[
+  {
+    "path": "embedding/config.json",
+    "repository": "minishlab/potion-base-8M",
+    "revision": "bf8b056651a2c21b8d2565580b8569da283cab23",
+    "sha256": "2a6ac0e9aaa356a68a5688070db78fc3a464fefe85d2f06a1905ce3718687553"
+  },
+  {
+    "path": "embedding/tokenizer.json",
+    "repository": "minishlab/potion-base-8M",
+    "revision": "bf8b056651a2c21b8d2565580b8569da283cab23",
+    "sha256": "e67e803f624fb4d67dea1c730d06e1067e1b14d830e2c2202569e3ef0f70bb50"
+  },
+  {
+    "path": "embedding/model.safetensors",
+    "repository": "minishlab/potion-base-8M",
+    "revision": "bf8b056651a2c21b8d2565580b8569da283cab23",
+    "sha256": "f65d0f325faadc1e121c319e2faa41170d3fa07d8c89abd48ca5358d9a223de2"
+  },
+  {
+    "path": "reranker/config.json",
+    "repository": "Xenova/ms-marco-TinyBERT-L-2-v2",
+    "revision": "b76bb5e1fefd66aa36cd108622d768e86c015ff1",
+    "sha256": "463d8bce12140e74c56e008b1212b056487a76acdca8f31f9627d202f6e5a7bd"
+  },
+  {
+    "path": "reranker/tokenizer.json",
+    "repository": "Xenova/ms-marco-TinyBERT-L-2-v2",
+    "revision": "b76bb5e1fefd66aa36cd108622d768e86c015ff1",
+    "sha256": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+  },
+  {
+    "path": "reranker/model_quantized.onnx",
+    "repository": "Xenova/ms-marco-TinyBERT-L-2-v2",
+    "revision": "b76bb5e1fefd66aa36cd108622d768e86c015ff1",
+    "sha256": "026c2ec3257cd351696e45bbd6040bb83cf818ba89059b4344bd6350138b62ce"
+  },
+  {
+    "path": "verifier/config.json",
+    "repository": "Xenova/nli-deberta-v3-xsmall",
+    "revision": "2a4f614a701367a02d51389039afc998faeda637",
+    "sha256": "ec0bd14cc28640326474399cd61d38ccd52b64900228799d0f81debda8c4bc53"
+  },
+  {
+    "path": "verifier/tokenizer.json",
+    "repository": "Xenova/nli-deberta-v3-xsmall",
+    "revision": "2a4f614a701367a02d51389039afc998faeda637",
+    "sha256": "a86f883318afa11c8c10466f1bf4efaeb6ded28a52cbe57217a8fa0d0a2a87df"
+  },
+  {
+    "path": "verifier/model_quantized.onnx",
+    "repository": "Xenova/nli-deberta-v3-xsmall",
+    "revision": "2a4f614a701367a02d51389039afc998faeda637",
+    "sha256": "3fac2500c45c75af42c7711de0d1b93d59577456100208be0dc1f9e8811946b6"
+  }
+]

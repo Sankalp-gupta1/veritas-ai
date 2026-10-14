@@ -1,0 +1,11 @@
+{
+  "name": "Cedar authored development questions",
+  "split": "development",
+  "notice": "These questions use fictional PDFs. They are not a held-out research benchmark.",
+  "questions": [
+    {"id":"q1","question":"How many adults participated in the Cedar trial and how long did it last?","answerable":true,"facts":{"participants":"120 adults","duration":"six weeks"}},
+    {"id":"q2","question":"Why do the Cedar reports disagree about attention improvement?","answerable":true,"facts":{"original":"Primary report: 12 points","corrected":"Reanalysis: 2 points, after a scoring correction"}},
+    {"id":"q3","question":"Which organization funded the Cedar trial?","answerable":false,"facts":{}},
+    {"id":"q4","question":"Does the Willow study prove that reading causes better concentration?","answerable":true,"facts":{"design":"observational, not randomized","causality":"association does not establish causation"}}
+  ]
+}

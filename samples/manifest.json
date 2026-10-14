@@ -1,0 +1,29 @@
+{
+  "documents": [
+    {
+      "filename": "cedar-trial-report.pdf",
+      "title": "The Cedar Sleep Study",
+      "pages": 2,
+      "license": "CC0-1.0",
+      "fictional": true,
+      "sha256": "f99c98b37c315beaa995f231bea54181086f0831e9803a54b76c5595b68d0cd2"
+    },
+    {
+      "filename": "cedar-reanalysis.pdf",
+      "title": "Cedar: An Independent Reanalysis",
+      "pages": 1,
+      "license": "CC0-1.0",
+      "fictional": true,
+      "sha256": "86984f823c65f1e415d1ba67622cd2f1455f5fde16f339db6c82914877dd7d9b"
+    },
+    {
+      "filename": "willow-observation.pdf",
+      "title": "The Willow Reading Project",
+      "pages": 1,
+      "license": "CC0-1.0",
+      "fictional": true,
+      "sha256": "5b529a56c91d86c9b8a67a89ebe2d2a11ab24f29463c0c60ba704a37ff7f2633"
+    }
+  ],
+  "notice": "Entirely fictional authored fixtures. Not published research or real company data."
+}

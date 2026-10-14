@@ -1,0 +1,30 @@
+{
+  "description": "Authored diagnostic fixture. Labels were fixed before inference; this is not a held-out research benchmark.",
+  "license": "CC0-1.0",
+  "examples": [
+    {"id":"s01","evidence":"The trial enrolled 120 adults.","claim":"There were 120 adult participants in the trial.","label":"supported"},
+    {"id":"s02","evidence":"The intervention lasted six weeks.","claim":"Participants received the intervention for six weeks.","label":"supported"},
+    {"id":"s03","evidence":"The control group improved its attention score by 2 points.","claim":"The control group had a 2-point improvement in attention score.","label":"supported"},
+    {"id":"s04","evidence":"The study was observational and cannot establish causation.","claim":"The study cannot establish a causal relationship.","label":"supported"},
+    {"id":"s05","evidence":"No children were recruited for the trial.","claim":"Children were excluded from the trial.","label":"supported"},
+    {"id":"s06","evidence":"The trial took place at a single university.","claim":"The research was conducted at one university.","label":"supported"},
+    {"id":"s07","evidence":"The treatment did not improve attention compared with the control group.","claim":"There was no improvement in attention relative to the control group.","label":"supported"},
+    {"id":"s08","evidence":"Average nightly sleep increased from 6.2 hours to 7.5 hours.","claim":"After the intervention, average nightly sleep was 7.5 hours.","label":"supported"},
+    {"id":"c01","evidence":"The trial enrolled 120 adults.","claim":"The trial enrolled 300 adults.","label":"contradicted"},
+    {"id":"c02","evidence":"The intervention lasted six weeks.","claim":"The intervention lasted twelve weeks.","label":"contradicted"},
+    {"id":"c03","evidence":"No children were recruited for the trial.","claim":"The trial recruited children.","label":"contradicted"},
+    {"id":"c04","evidence":"The study was observational, not randomized.","claim":"The study was a randomized trial.","label":"contradicted"},
+    {"id":"c05","evidence":"The reanalysis found no improvement in attention compared with the control group.","claim":"The reanalysis found improved attention compared with the control group.","label":"contradicted"},
+    {"id":"c06","evidence":"The research was conducted at a single university.","claim":"The research was conducted at five universities.","label":"contradicted"},
+    {"id":"c07","evidence":"Average nightly sleep was 7.5 hours after the intervention.","claim":"Average nightly sleep was 9 hours after the intervention.","label":"contradicted"},
+    {"id":"c08","evidence":"The corrected attention score improved by 2 points, not 12 points.","claim":"The corrected attention score improved by 12 points.","label":"contradicted"},
+    {"id":"n01","evidence":"The trial enrolled 120 adults.","claim":"The trial was funded by a pharmaceutical company.","label":"insufficient"},
+    {"id":"n02","evidence":"The intervention lasted six weeks.","claim":"The intervention reduced mortality.","label":"insufficient"},
+    {"id":"n03","evidence":"The control group improved its attention score by 2 points.","claim":"The control group slept for eight hours each night.","label":"insufficient"},
+    {"id":"n04","evidence":"The participants were adults aged 18 to 30.","claim":"The participants lived in Canada.","label":"insufficient"},
+    {"id":"n05","evidence":"The study was conducted at one university.","claim":"The study was conducted in 2024.","label":"insufficient"},
+    {"id":"n06","evidence":"The report measured attention scores after six weeks.","claim":"The intervention improved exam grades.","label":"insufficient"},
+    {"id":"n07","evidence":"The project observed 85 adults over four weeks.","claim":"The project collected blood samples.","label":"insufficient"},
+    {"id":"n08","evidence":"The intervention increased average sleep duration.","claim":"The intervention was inexpensive.","label":"insufficient"}
+  ]
+}
