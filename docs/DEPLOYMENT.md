@@ -6,7 +6,8 @@
 - A dedicated database named `veritas` and the schema were created in the connected Vercel-managed Neon project. Existing application tables were not changed.
 - The cloud database is not yet connected to a verified live VeritasAI website.
 - The connected Vercel account rejected project creation with **403 forbidden** for team `saritamit2004-2327s-projects` on 14 October 2026. There was no independently authenticated Vercel CLI session to use as a fallback.
-- No VeritasAI GitHub repository was found. The connected GitHub tools can write an existing repository but do not provide repository creation in this session.
+- The source is now public at https://github.com/Sankalp-gupta1/veritas-ai. The repository was created and uploaded manually on 14 October; setup files omitted by that upload are restored in the following source update.
+- On 15 October, the Vercel connection still returned 403 when listing this team's projects. The GitHub commit had no deployment status. The import screen's “Production and Preview” setting selects environments; it does not confirm a successful deployment.
 - Render was not connected in this session. A Render configuration file is supplied, but no Render deployment is claimed.
 
 These are access/deployment blockers, not a completed public release. No placeholder URL should be presented as live.
@@ -33,9 +34,9 @@ The CPU models require memory. Measure the container's actual footprint before s
 
 The project contains the official FastAPI entrypoint configuration in `pyproject.toml`, a build hook that compiles React and downloads model files, and `vercel.json` with the function entrypoint and file inclusion rules.
 
-After the team has project-creation and deployment access:
+After the connected account has access to the intended team:
 
-1. Create or connect the dedicated `veritas-ai` repository. Do not reuse an unrelated app repository.
+1. Use the existing dedicated `Sankalp-gupta1/veritas-ai` repository.
 2. Import it into the intended Vercel team with the **FastAPI** framework.
 3. Add `DATABASE_URL` as a sensitive variable. Add `APP_ENV=production` and optional Gemini variables.
 4. Apply migrations separately using a direct connection. The application does not mutate its schema on startup.
@@ -56,19 +57,16 @@ Official references:
 
 ## Publishing the repository
 
-The source archive excludes credentials, local environments, model weights, temporary databases and private experiment runs. After creating an empty repository named `veritas-ai`, push the reviewed source:
+The repository is published. To work on it, clone it rather than making another repository:
 
 ```bash
-git init -b main
-git add .
-git commit -m "Build VeritasAI evidence research workspace"
-git remote add origin https://github.com/Sankalp-gupta1/veritas-ai.git
-git push -u origin main
+git clone https://github.com/Sankalp-gupta1/veritas-ai.git
+cd veritas-ai
 ```
 
-If you cloned an existing repository rather than opening the source ZIP, skip initialization and use its existing remote. Git may ask you to configure your author name and email before the first commit. Authenticate using GitHub's normal browser or credential-manager flow; never put a password or token in these commands.
+Follow the README to install dependencies and configure your private environment. The repository excludes credentials, local environments, model weights, temporary databases and private experiment runs. Authenticate future pushes using GitHub's normal browser or credential-manager flow; never put a password or token in shell commands.
 
-That URL is the intended destination, not a claim that the repository already exists. The exact repository must exist and be authorized before pushing.
+The repository URL is confirmed. No public application URL is claimed until the deployed upload, retrieval and deletion flow has been checked.
 
 ## Release checks
 

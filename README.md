@@ -6,7 +6,7 @@ VeritasAI is a research workspace that helps you ask questions about PDFs and ch
 
 A useful answer should let you ask, **“Where did that come from?”** In VeritasAI, each citation opens the exact PDF page and supporting text. If a claim is unsupported, the app withholds it. If retrieved sources appear to disagree, you can inspect both sides.
 
-**Status:** working local implementation with real model inference and PostgreSQL integration tests. Cloud database schema provisioned. A public deployment and GitHub publication are not completed yet; see [deployment status](docs/DEPLOYMENT.md). This is an early research prototype, not a completed publication or a guarantee of truth.
+**Status:** source published at [Sankalp-gupta1/veritas-ai](https://github.com/Sankalp-gupta1/veritas-ai), with real local model inference and PostgreSQL integration tests. Cloud database schema provisioned. A public deployment is not verified yet; see [deployment status](docs/DEPLOYMENT.md). This is an early research prototype, not a completed publication or a guarantee of truth.
 
 ## What you can do
 

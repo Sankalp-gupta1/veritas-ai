@@ -24,7 +24,7 @@ This is source-support checking. A wrong paper can still support a wrong claim. 
 | Reproducible experiments | Collection, blind review export, scoring and graph scripts included. |
 | Easy setup and explanations | README, user guide, architecture, file guide and design decisions included. |
 | Research manuscript | Preliminary draft included; no claim of a completed novel research result. |
-| GitHub repository | Publication blocked: an empty dedicated repository is still needed. |
+| GitHub repository | Published at https://github.com/Sankalp-gupta1/veritas-ai; setup configuration restored after the initial manual upload. |
 | Public deployment | Blocked by the connected Vercel team's 403 response to project creation. Render is not connected. |
 
 ## 3. A user's journey
@@ -95,7 +95,7 @@ These are documented engineering limits, not a completed security audit. See [SE
 
 ## 9. Next milestones
 
-1. Publish the dedicated repository, resolve hosting permissions, and validate a real deployed upload-to-deletion workflow.
+1. Resolve hosting permissions and validate a real deployed upload-to-deletion workflow using the published repository.
 2. Test a real generator using a privately supplied key; verify provider errors and quota behavior in the hosted application.
 3. Strengthen identity, database roles, resource isolation, and concurrent-request handling.
 4. Collect a licensed corpus, freeze development and held-out splits, and conduct independent annotation.
