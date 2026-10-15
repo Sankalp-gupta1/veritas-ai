@@ -1,73 +1,70 @@
-# Deployment and current status
+# Where VeritasAI runs
 
-## What is actually complete
+**Live website: https://veritas-ai-v8lw.vercel.app/**
+**Source code: https://github.com/Sankalp-gupta1/veritas-ai**
 
-- The source, model downloads, React production build and local API/model tests are implemented.
-- A dedicated database named `veritas` and the schema were created in the connected Vercel-managed Neon project. Existing application tables were not changed.
-- The cloud database is not yet connected to a verified live VeritasAI website.
-- The connected Vercel account rejected project creation with **403 forbidden** for team `saritamit2004-2327s-projects` on 14 October 2026. There was no independently authenticated Vercel CLI session to use as a fallback.
-- The source is now public at https://github.com/Sankalp-gupta1/veritas-ai. The repository was created and uploaded manually on 14 October; setup files omitted by that upload are restored in the following source update.
-- On 15 October, the Vercel connection still returned 403 when listing this team's projects. The GitHub commit had no deployment status. The import screen's “Production and Preview” setting selects environments; it does not confirm a successful deployment.
-- Render was not connected in this session. A Render configuration file is supplied, but no Render deployment is claimed.
+The website was manually deployed by the owner. Public HTTP checks and browser testing were performed on 15 October 2026. The website, API, PostgreSQL connection and local models respond. See [the validation record](VALIDATION.md) for tested flows and remaining limits.
 
-These are access/deployment blockers, not a completed public release. No placeholder URL should be presented as live.
+## How the live pieces connect
 
-## Docker on a server
+- **Vercel project:** `veritas-ai-v8lw` serves the React interface and Python/FastAPI API.
+- **PostgreSQL on Neon:** stores the original PDF bytes, pages, vectors, workspace tokens and saved results. These records do not depend on a temporary Vercel filesystem.
+- **Local CPU models:** downloaded when Vercel builds the app; used for search, reranking and claim checks.
+- **Optional Gemini:** not configured on the live server during this review. A user can enter their own key in AI settings for that tab. A self-hosted installation can also use Ollama.
 
-The included `Dockerfile` builds the React frontend, installs Python packages, downloads pinned models, and runs FastAPI as an unprivileged user. Durable state lives in PostgreSQL, not the container filesystem.
+The Vercel admin connector returned 403 for this team, so it could not inspect private deployment settings. This does **not** mean that the public website is unavailable. The public site and GitHub deployment status were checked independently. No deployment protection was disabled.
 
-For local use, `docker compose up --build` also starts PostgreSQL and runs migrations. The exposed database and app ports bind to localhost only.
+## Deploy this repository on Vercel
 
-For a cloud container host:
+1. Import `Sankalp-gupta1/veritas-ai` and choose the **FastAPI** framework.
+2. Use Python 3.12 and Node 24, matching the repository's CI environment.
+3. Add the private environment variables below in Vercel's settings.
+4. Run `python scripts/migrate.py` once with a direct database connection. The application does not modify its schema during startup.
+5. Deploy. `scripts/build.py` builds React, downloads pinned models and copies the generated assets into the root `public/` directory for Vercel's CDN.
+6. Open the production URL and check `/api/health`. Then test a real upload, a claim, its citation, history and deletion.
 
-1. Supply a dedicated PostgreSQL database with pgvector.
-2. Set `DATABASE_URL` as a secret. Use a pooled URL if your provider supports it.
-3. Apply `python scripts/migrate.py` once using the direct migration URL.
-4. Set `APP_ENV=production` behind HTTPS. This enables Secure cookies.
-5. Optionally set `GEMINI_API_KEY` and `GEMINI_MODEL`. Otherwise users can supply a key in the UI.
-6. Build and start the Docker image. The HTTP port is 8000.
-7. Check `/api/health`, then test a real upload, retrieval, claim check, source download and deletion.
+| Variable | What to enter |
+|---|---|
+| `DATABASE_URL` | Your private, preferably pooled PostgreSQL URL with pgvector enabled. |
+| `DATABASE_URL_UNPOOLED` | The direct URL for migrations; keep this outside the web runtime when practical. |
+| `APP_ENV` | `production` when the site uses HTTPS. This enables Secure cookies. |
+| `GEMINI_API_KEY` | Optional server-side Gemini key. Never use a `VITE_` variable for secrets. |
+| `GEMINI_MODEL` | Optional model name available to that key. |
 
-The CPU models require memory. Measure the container's actual footprint before selecting a small hosting plan. Do not assume a free instance can comfortably hold every model under concurrency.
+The model files and `frontend/dist` are also bundled with the FastAPI function. A past deployment served HTML without usable JavaScript; the root `public/assets` copy fixes static asset delivery. Keep this build step when changing deployment configuration. The `/` and `/index.html` routes also send `Cache-Control: no-store, max-age=0` and return the current HTML even when a browser sends conditional cache headers. Hashed assets can remain cacheable; the small HTML shell must not point at a previous deployment.
 
-## Vercel
+Uploads are limited to 4 MB before multipart overhead. Increasing this number alone will not solve a hosting platform's request-size limit. Larger files need a separate upload/storage design.
 
-The project contains the official FastAPI entrypoint configuration in `pyproject.toml`, a build hook that compiles React and downloads model files, and `vercel.json` with the function entrypoint and file inclusion rules.
+## Check a deployed installation yourself
 
-After the connected account has access to the intended team:
+From the repository, with Python dependencies installed:
 
-1. Use the existing dedicated `Sankalp-gupta1/veritas-ai` repository.
-2. Import it into the intended Vercel team with the **FastAPI** framework.
-3. Add `DATABASE_URL` as a sensitive variable. Add `APP_ENV=production` and optional Gemini variables.
-4. Apply migrations separately using a direct connection. The application does not mutate its schema on startup.
-5. Deploy and inspect the real build logs. Model files plus Python dependencies must fit the selected plan's bundle/memory limits.
-6. Test both the production alias and API routes. Review the team's deployment protection settings; a READY build does not by itself prove that everyone can open it.
+```bash
+python scripts/smoke_live.py \
+  --base-url https://veritas-ai-v8lw.vercel.app \
+  --out tmp/my-live-check.json
+```
 
-The upload limit is intentionally below Vercel's documented 4.5 MB request-body limit. Larger uploads would require private object storage and direct uploads, not just a higher FastAPI setting.
+This command creates fresh test workspaces, uploads only the included fictional PDFs, exercises public API flows, and removes its workspaces in a `finally` block. It never uses an existing user's cookie. It stops at the first failure and records whether cleanup succeeded. Choose a new report filename for each run. It does not test browser rendering, a paid provider, or service-restart durability.
 
-Official references:
+## Docker on your computer or a server
 
-- https://vercel.com/docs/frameworks/backend/fastapi
-- https://vercel.com/docs/functions/limitations
-- https://neon.com/docs/connect/connection-pooling
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:8000`. Docker builds React, downloads models, starts PostgreSQL with pgvector, applies the schema and starts FastAPI. Database data uses a named volume. `docker compose down` stops the containers without removing that volume. The example password is only for this localhost-bound setup.
+
+For a cloud container host, supply your own database secret, run the migration, set `APP_ENV=production` behind HTTPS, and expose port 8000. The image runs Python as an unprivileged user. Measure memory and concurrency before selecting a hosting plan.
+
+**Docker execution was not tested in this environment.** The files are a deployment option, not a claim that a Docker instance is already running.
 
 ## Render
 
-`render.yaml` describes a Docker web service and lists secret variables without including their values. Before using it, connect the intended Render account and confirm available plan capacity. The file's free-plan setting is a starting configuration, not a tested capacity guarantee. Run the database migration separately before starting the service.
+`render.yaml` is a starting Docker blueprint. Render was not connected or deployed during this review. Confirm plan capacity, supply secrets privately, and run the database migration separately before using it. The live link above is the Vercel installation.
 
-## Publishing the repository
+## Remaining release work
 
-The repository is published. To work on it, clone it rather than making another repository:
+Test a real generator, mobile and keyboard access, service restart, concurrent uploads and cold starts. Add account recovery, retention controls and a restricted database runtime role before expanding to a broad public service. A successful health check or build does not replace these checks.
 
-```bash
-git clone https://github.com/Sankalp-gupta1/veritas-ai.git
-cd veritas-ai
-```
-
-Follow the README to install dependencies and configure your private environment. The repository excludes credentials, local environments, model weights, temporary databases and private experiment runs. Authenticate future pushes using GitHub's normal browser or credential-manager flow; never put a password or token in shell commands.
-
-The repository URL is confirmed. No public application URL is claimed until the deployed upload, retrieval and deletion flow has been checked.
-
-## Release checks
-
-Verify a genuine PDF upload persists across a service restart, two independent workspaces cannot access each other's sources, original page downloads require the correct cookie, unsupported claims are withheld, and deletion removes source text from saved history. Also test real provider success, quota errors and frontend keyboard/mobile flows. Keep the private database migration credential out of the runtime where possible; use a restricted application role.
+Official setup references: [FastAPI on Vercel](https://vercel.com/docs/frameworks/backend/fastapi), [function limits](https://vercel.com/docs/functions/limitations), [Neon pooling](https://neon.com/docs/connect/connection-pooling).

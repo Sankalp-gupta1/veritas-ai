@@ -1,12 +1,27 @@
 # VeritasAI
 
-### Good answers. Evidence you can see.
+**[Open the live website →](https://veritas-ai-v8lw.vercel.app/)**
+
+[How to use it](docs/USER_GUIDE.md) · [What each file does](docs/FILE_GUIDE.md) · [Test results](docs/VALIDATION.md) · [Project report](docs/PROJECT_REPORT.md)
+
+### Ask your PDFs. Check the evidence.
 
 VeritasAI is a research workspace that helps you ask questions about PDFs and check whether individual claims are supported by those documents.
 
 A useful answer should let you ask, **“Where did that come from?”** In VeritasAI, each citation opens the exact PDF page and supporting text. If a claim is unsupported, the app withholds it. If retrieved sources appear to disagree, you can inspect both sides.
 
-**Status:** source published at [Sankalp-gupta1/veritas-ai](https://github.com/Sankalp-gupta1/veritas-ai), with real local model inference and PostgreSQL integration tests. Cloud database schema provisioned. A public deployment is not verified yet; see [deployment status](docs/DEPLOYMENT.md). This is an early research prototype, not a completed publication or a guarantee of truth.
+**Live status, 15 October 2026:** the React website and FastAPI backend are running on Vercel with a connected PostgreSQL database and local search/checking models. PDF uploads, source excerpts and claim checks work without a paid AI key. The server has **no Gemini key configured**, so AI-written answers require your own key in **AI settings**. This is a working research prototype; it does not guarantee that a source or answer is true.
+
+## Try it in two minutes — no installation
+
+1. [Open VeritasAI](https://veritas-ai-v8lw.vercel.app/) and wait for **Workspace ready**.
+2. Click **Try our authored sample documents**, or upload a text-based PDF.
+3. Choose **Check a claim**. Enter: `The Cedar trial enrolled 120 adults.`
+4. Press the arrow button. Open a source under the answer to see its page and highlighted text.
+5. Try: `The Cedar trial was funded by a pharmaceutical company.` The supplied documents do not establish this, so the claim should be withheld.
+6. With both Cedar PDFs selected, try: `The Cedar sleep-extension group improved its attention score by 12 points.` The primary report and corrected report disagree; inspect both.
+
+The sample PDFs are fictional examples written for testing. They are not real research or medical advice. Keep this browser's cookies to retain access to your workspace.
 
 ## What you can do
 
@@ -19,7 +34,7 @@ A useful answer should let you ask, **“Where did that come from?”** In Verit
 | Get an AI-written answer | Connect your own Gemini key, or use Ollama on a self-hosted installation. |
 | Follow the evidence | Open the original PDF, physical page number, exact quote and highlighted extracted text. |
 | Review uncertainty | See supported, contradicted, insufficient and possible-disagreement labels. |
-| Compare methods | Run normal RAG, reranked RAG and verified RAG on the same question. |
+| Compare methods | With a generative model connected, run normal RAG, reranked RAG and verified RAG on the same question. |
 | Keep a research trail | Reopen saved answers and download a JSON evidence record. |
 | Inspect experiments | The evidence lab shows actual fixture measurements, including failures. |
 
@@ -43,17 +58,6 @@ docker compose down
 
 The Docker files are supplied for reproducible deployment. Docker was not available in the implementation environment, so the image build itself is not claimed as tested. The application, dependencies, frontend build and real PostgreSQL-compatible integration flow were tested separately.
 
-## Your first two minutes
-
-1. Click **Upload PDFs**, or **Try our authored sample documents**.
-2. Keep the documents you want checked in the left sidebar.
-3. Choose **Check a claim**. Try: `The Cedar trial enrolled 120 adults.`
-4. Open a citation. The right panel shows its exact page and matching text.
-5. Try a claim that the documents do not establish: `The Cedar trial was funded by a pharmaceutical company.`
-6. Open **AI settings** if you want a generated explanation rather than source excerpts.
-
-The Cedar and Willow PDFs are fictional test documents. They are not scientific publications or medical evidence.
-
 ## Connect Gemini safely
 
 Get your own key from [Google AI Studio](https://aistudio.google.com/apikey). In the app, open **AI settings**, choose **Gemini**, and enter the key in the password field.
@@ -64,7 +68,7 @@ Get your own key from [Google AI Studio](https://aistudio.google.com/apikey). In
 - The default is `gemini-3.5-flash-lite`. Model access and free quotas depend on your Google account. You can change the model name.
 - For a private installation, the owner can instead set `GEMINI_API_KEY` in the server environment. Do not put it in React code, GitHub or a committed file.
 
-No real Gemini key was available during implementation. Live Gemini generation, quota behaviour and end-to-end generated-answer quality remain unverified. Missing-key and provider-format/error behaviour have explicit tests; no model response is silently faked.
+Live Gemini generation, quota behaviour and generated-answer quality remain unverified because no real key was supplied for testing. The app reports a missing key rather than inventing a response. You can keep using local **Source excerpts** and **Check a claim**.
 
 ## Run without Docker for development
 
@@ -144,7 +148,7 @@ Three things remain separate:
 
 ## Tests and research
 
-Release checks: **20 Python tests and 2 React tests passed**, and the TypeScript/production build passed. See [the validation record](docs/VALIDATION.md) for the test environment and remaining checks.
+Release checks on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38737165149): **23 Python tests and 2 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks**, with a separate desktop browser walkthrough. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
 
 ```bash
 python -m pytest tests/test_evidence.py -q
@@ -168,7 +172,7 @@ See [the experiment protocol](research/PROTOCOL.md) for controlled RAG compariso
 4. [Design decisions](docs/DECISIONS.md): choices and trade-offs.
 5. [Project report](docs/PROJECT_REPORT.md): implemented work, measured results and remaining work.
 6. [Research-paper draft](research/PAPER_DRAFT.md): honest preliminary manuscript with prior work.
-7. [Deployment](docs/DEPLOYMENT.md): Docker, Vercel and Render setup, plus current blockers.
+7. [Deployment](docs/DEPLOYMENT.md): the live site, Vercel setup, and Docker/Render alternatives.
 8. [Privacy and security](docs/SECURITY.md): data boundaries and limits.
 
 ## Limits you should know
@@ -181,7 +185,7 @@ See [the experiment protocol](research/PROTOCOL.md) for controlled RAG compariso
 - Files are kept until explicitly deleted. Deleting a document also removes the workspace's saved answers because they contain source text.
 - “Compare methods” needs an actual generative model. Source excerpts are not labelled as a generative RAG baseline.
 - Reranker and verifier scores are not calibrated probabilities of correctness.
-- No public deployment, browser visual QA, live Gemini run or large independent benchmark is claimed as complete.
+- Live Gemini/Ollama, Docker execution, mobile/keyboard accessibility, concurrent load and a large independent benchmark still need separate testing. See the dated validation record for exactly what passed.
 
 ## Next research milestone
 

@@ -434,7 +434,7 @@ export default function App() {
               AI settings
               <small>
                 {settings.provider === "gemini"
-                  ? "Gemini connected for this session"
+                  ? "Gemini selected for this session"
                   : settings.provider === "ollama"
                     ? "Local Ollama"
                     : "Local evidence tools"}

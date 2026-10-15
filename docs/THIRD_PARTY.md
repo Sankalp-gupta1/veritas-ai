@@ -34,7 +34,7 @@ Google Gemini is an optional external API. It is not an open-source model. `gemi
 
 Ollama is an optional self-hosted provider. The example `qwen3:4b` model must be installed separately, and its model terms remain applicable. It was not downloaded or benchmarked in this implementation session.
 
-The local integration run used Electric's PGlite PostgreSQL-WASM engine with pgvector and its socket adapter because a native PostgreSQL service and Docker were unavailable. This is a real SQL/vector execution test, but it is not a substitute for testing a hosted Neon deployment or PostgreSQL concurrency under load.
+The local integration run used Electric's PGlite PostgreSQL-WASM engine with pgvector and its socket adapter because a native PostgreSQL service and Docker were unavailable. This was a real SQL/vector execution test. Subsequent GitHub CI used native PostgreSQL 17/pgvector, and the public Vercel application was exercised against its hosted database on 15 October 2026. Concurrency under load remains untested. See `VALIDATION.md`.
 
 ## Data
 

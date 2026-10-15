@@ -1,7 +1,7 @@
 # VeritasAI: implementation and preliminary evaluation
 
-**Prepared:** 14 October 2026  
-**Release:** 0.1.0, research prototype  
+**Updated:** 15 October 2026
+**Release:** 0.1.0, research prototype
 **Owner:** Sankalp Gupta
 
 ## 1. What the project solves
@@ -14,9 +14,9 @@ This is source-support checking. A wrong paper can still support a wrong claim. 
 
 | Requested output | Current state |
 |---|---|
-| React website with multiple PDF uploads | Implemented; production frontend build passes. Browser visual QA remains pending. |
+| React website with multiple PDF uploads | Live on Vercel; production build and desktop browser walkthrough pass. Mobile/keyboard coverage remains incomplete. |
 | Python/FastAPI API and PostgreSQL vector search | Implemented and integration-tested with real SQL and local models. |
-| Persistent cloud database | Dedicated `veritas` database and schema provisioned in Neon. Not yet exercised by a live web deployment. |
+| Persistent cloud database | Dedicated `veritas` database on Neon; live uploads, queries and workspace isolation exercised through the public website. |
 | Questions with exact sources, pages and quotes | Implemented. Source-excerpt mode works without a generative API key. |
 | AI-written answers | Gemini and self-hosted Ollama adapters implemented. No live provider run was available during this release. |
 | Claim-level checking and possible disagreements | Implemented with exact quote checks and local NLI inference. |
@@ -25,7 +25,7 @@ This is source-support checking. A wrong paper can still support a wrong claim. 
 | Easy setup and explanations | README, user guide, architecture, file guide and design decisions included. |
 | Research manuscript | Preliminary draft included; no claim of a completed novel research result. |
 | GitHub repository | Published at https://github.com/Sankalp-gupta1/veritas-ai; setup configuration restored after the initial manual upload. |
-| Public deployment | Blocked by the connected Vercel team's 403 response to project creation. Render is not connected. |
+| Public deployment | https://veritas-ai-v8lw.vercel.app/ is publicly accessible. GitHub-triggered deployment verified. Render is not deployed. |
 
 ## 3. A user's journey
 
@@ -47,7 +47,7 @@ Three small local models have different jobs: POTION creates embeddings, TinyBER
 
 The server derives page numbers and offsets from stored passages. It does not trust a model to invent citation metadata. Offsets identify normalized extracted text, not PDF pixel coordinates. A quote must match exactly after normalization before semantic checking can support the claim.
 
-The verifier checks individual claims against cited quotes, then scans the retrieved context for possible counterevidence. It uses initial thresholds of 0.80 for support and 0.85 for contradiction. These are operational thresholds, not calibrated probabilities. Support is currently established by a single cited quote; reasoning that requires several passages jointly remains a limitation.
+The verifier checks individual claims against cited quotes, then scans the retrieved context for possible counterevidence. For user-entered claims, bounded sentence quotes are ranked for support while full paragraphs remain available for contradiction checks. This fixes a reproduced multi-sentence failure in the two Cedar reports without lowering verification thresholds. It is a development fix, not evidence of general research improvement. It uses initial thresholds of 0.80 for support and 0.85 for contradiction. These are operational thresholds, not calibrated probabilities. Support is currently established by a single cited quote; reasoning that requires several passages jointly remains a limitation.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md) for the complete explanation.
 
@@ -57,9 +57,9 @@ The test suite exercises PDF parsing, real model inference, citation provenance,
 
 The suite also uses controlled provider responses to test JSON parsing, safe errors, bounded retries and reuse of the same draft between reranked and verified variants. Those responses are test inputs, not live LLM observations or research results. The research scorer checks that withholding every claim does not produce a perfect factual score, and refuses unreviewed outputs.
 
-React component tests check citation interactions and safe rendering of model text. TypeScript and the production build are checked. The CI definition is configured to use native PostgreSQL with pgvector when the source is published; that remote CI run has not happened yet.
+React component tests check citation interactions and safe rendering of model text. TypeScript and the production build are checked. GitHub Actions now runs these checks against native PostgreSQL 17 with pgvector. The reviewed fix passed 23 Python tests, 2 React tests and the frontend build: [CI run](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38737165149).
 
-The exact release commands and outcomes are recorded in [VALIDATION.md](VALIDATION.md). Docker image execution, real browser flows, live Gemini calls and hosted end-to-end behavior remain unverified.
+The exact release commands and outcomes are recorded in [VALIDATION.md](VALIDATION.md). Live API and desktop browser results are recorded separately from unit tests. Docker execution, live Gemini calls, mobile/keyboard accessibility, cold starts and concurrent load remain unverified.
 
 ## 6. Preliminary measurement
 
@@ -95,7 +95,7 @@ These are documented engineering limits, not a completed security audit. See [SE
 
 ## 9. Next milestones
 
-1. Resolve hosting permissions and validate a real deployed upload-to-deletion workflow using the published repository.
+1. Extend the completed live workflow checks with service-restart, mobile, keyboard and concurrent-load testing.
 2. Test a real generator using a privately supplied key; verify provider errors and quota behavior in the hosted application.
 3. Strengthen identity, database roles, resource isolation, and concurrent-request handling.
 4. Collect a licensed corpus, freeze development and held-out splits, and conduct independent annotation.

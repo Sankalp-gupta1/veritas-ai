@@ -1,6 +1,6 @@
 # VeritasAI: Inspectable Claim-Level Evidence Checks for Document Question Answering
 
-**Sankalp Gupta**  
+**Sankalp Gupta**
 **Preliminary manuscript — 14 October 2026**
 
 This is a draft describing an implemented prototype and small diagnostic evaluation. It is not a published paper, a completed research study, or evidence of a novel state-of-the-art method. Sections requiring new experiments are explicitly marked pending.
@@ -98,7 +98,7 @@ The authored diagnostic sample is small and susceptible to author bias. Threshol
 
 Claim atomicity is requested from the generator but is not independently guaranteed. Maximum single-quote support misses joint reasoning and can be vulnerable to incomplete context. Counterevidence search is limited to retrieved passages; absence of a warning does not establish consensus. Source documents may themselves contain errors or malicious instructions.
 
-PDF extraction does not include OCR or reliable structured table understanding. Workspace cookie access lacks user-account recovery. Native hosted-database behavior, Docker capacity, browser accessibility and live provider integration require further deployment validation. Independent reviewers, licensed corpus splits and broader replication are needed before making general research claims.
+PDF extraction does not include OCR or reliable structured table understanding. Workspace cookie access lacks user-account recovery. Public API workflows, hosted database access and a desktop browser walkthrough have been checked; see the engineering validation record. Docker capacity, restart/load behavior, mobile/keyboard accessibility and live provider integration still need validation. These engineering checks do not replace independent research evaluation. Independent reviewers, licensed corpus splits and broader replication are needed before making general research claims.
 
 ## 7. Reproducibility and data handling
 

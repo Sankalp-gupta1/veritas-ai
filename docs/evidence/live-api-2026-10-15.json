@@ -1,0 +1,457 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-15T12:47:09.548734+00:00",
+  "base_url": "https://veritas-ai-v8lw.vercel.app",
+  "scope": "Public HTTP/API flows using fictional PDFs and fresh workspaces; not browser-rendering QA",
+  "checks": [
+    {
+      "name": "Public homepage",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Homepage shell is not cached across deployments",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Frontend asset /favicon.svg",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Frontend asset /assets/index-Cb23PlVD.js",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Lazy-loaded evidence lab bundle",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Frontend asset /assets/index-DXrjX2lu.css",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Live health endpoint",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Database and local models ready",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "OpenAPI schema",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Unauthenticated document access denied",
+      "passed": true,
+      "detail": "HTTP 401"
+    },
+    {
+      "name": "Mutation without request header denied",
+      "passed": true,
+      "detail": "HTTP 403"
+    },
+    {
+      "name": "Cross-origin mutation denied",
+      "passed": true,
+      "detail": "HTTP 403"
+    },
+    {
+      "name": "Alice fresh workspace",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Alice secure workspace cookie",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Bob fresh workspace",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Bob secure workspace cookie",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "List new documents",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Fresh workspace is empty",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Sample manifest",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Download sample cedar-trial-report.pdf",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Sample bytes match versioned fixture cedar-trial-report.pdf",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Upload cedar-trial-report.pdf",
+      "passed": true,
+      "detail": "HTTP 201"
+    },
+    {
+      "name": "Download sample cedar-reanalysis.pdf",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Sample bytes match versioned fixture cedar-reanalysis.pdf",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Upload cedar-reanalysis.pdf",
+      "passed": true,
+      "detail": "HTTP 201"
+    },
+    {
+      "name": "Download sample willow-observation.pdf",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Sample bytes match versioned fixture willow-observation.pdf",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Upload willow-observation.pdf",
+      "passed": true,
+      "detail": "HTTP 201"
+    },
+    {
+      "name": "List uploaded documents",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Three PDFs stored",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Duplicate upload",
+      "passed": true,
+      "detail": "HTTP 201"
+    },
+    {
+      "name": "Duplicate is not stored twice",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Other workspace cannot open PDF",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Other workspace cannot open page",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Other workspace cannot delete PDF",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Other workspace cannot retrieve selected PDF",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Verify supported claim",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Supported statement retained",
+      "passed": true,
+      "detail": "supported"
+    },
+    {
+      "name": "Answer contains inspectable evidence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Other workspace cannot read saved answer",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Verify unsupported funding claim",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Insufficient evidence withheld",
+      "passed": true,
+      "detail": "insufficient"
+    },
+    {
+      "name": "Verify conflicting numerical claim",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Incorrect quantity withheld",
+      "passed": true,
+      "detail": "contradicted"
+    },
+    {
+      "name": "Check disagreement across two reports",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Conflicting sources preserved",
+      "passed": true,
+      "detail": "conflict"
+    },
+    {
+      "name": "Answer contains inspectable evidence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Ask a source-grounded question",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Real source excerpts returned",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Answer contains inspectable evidence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Citation quote matches exact physical page offsets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Reopen saved answer",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Reload documents",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Workspace persists across a fresh HTTP client",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Open original PDF",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Original PDF bytes preserved",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Invalid page number",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Malformed PDF rejected",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Encrypted PDF rejected",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Image-only or blank PDF explains OCR limitation",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Oversized PDF rejected",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Blank question rejected",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Empty document selection rejected",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Unknown source rejected",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Extractive mode cannot masquerade as RAG comparison",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Missing Gemini key gives actionable error",
+      "passed": true,
+      "detail": "HTTP 422"
+    },
+    {
+      "name": "Missing-key message is clear",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Evidence lab measurements",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Research data is measured and labelled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Delete one uploaded source",
+      "passed": true,
+      "detail": "HTTP 204"
+    },
+    {
+      "name": "Deleted source cannot be downloaded",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "History after deletion",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Deletion clears saved source text from history",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Remaining documents",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Unrelated sources remain",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "limitations": [
+    "No browser visual/keyboard/mobile test",
+    "No service-restart or load test",
+    "No server Gemini key configured; live generation and three-method quality comparison not tested"
+  ],
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "models_ready": true,
+    "gemini_configured": false,
+    "ollama_available": false,
+    "limits": {
+      "file_mb": 4,
+      "pages": 80,
+      "documents": 20
+    }
+  },
+  "cleanup": [
+    {
+      "test_workspace": 1,
+      "deleted": true
+    },
+    {
+      "test_workspace": 2,
+      "deleted": true
+    }
+  ],
+  "finished_at": "2026-10-15T12:55:16.325273+00:00",
+  "duration_seconds": 486.77
+}

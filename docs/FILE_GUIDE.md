@@ -55,11 +55,13 @@ TypeScript is JavaScript with descriptions of expected data types. It helps catc
 |---|---|
 | `scripts/download_models.py` | Downloads pinned model revisions and records file hashes. |
 | `scripts/migrate.py` | Applies the SQL schema to the configured database. |
-| `scripts/build.py` | Downloads models and builds React for Vercel. |
+| `scripts/build.py` | Downloads models, builds React and copies static assets to the Vercel CDN directory. |
 | `scripts/create_samples.py` | Creates the fictional Cedar and Willow PDFs with ReportLab. |
+| `scripts/smoke_live.py` | Checks a deployed site using fresh test workspaces; records results and deletes its own data. |
 | `scripts/evaluate.py` | Runs the actual 24-pair local NLI evaluation and creates figures. |
 | `tests/test_evidence.py` | Tests parsing, offsets, exact quotes, unknown sources and real model decisions. |
 | `tests/test_generation.py` | Tests provider formatting, malformed output, safe errors and bounded retries using controlled HTTP responses. |
+| `tests/test_delivery.py` | Checks that refreshing the website loads the current frontend after a deployment. |
 | `tests/test_api.py` | Tests actual uploads, retrieval, workspace separation, history, deletion and comparison wiring. Requires a disposable database. |
 | `tests/test_research.py` | Tests metric arithmetic and refusal to score missing independent labels. Its labels are authored test inputs. |
 | `.github/workflows/ci.yml` | Configures GitHub to test against native PostgreSQL/pgvector and build the frontend. |
@@ -112,8 +114,9 @@ No included sample is a real scientific paper or customer document. Private expe
 | `docs/DECISIONS.md` | Why were these technologies and boundaries chosen? |
 | `docs/FILE_GUIDE.md` | What is each file for? |
 | `docs/PROJECT_REPORT.md` | What was built, measured and left unfinished? |
+| `docs/evidence/` | Raw live API check results, including the first reproduced conflict failure. |
 | `docs/VALIDATION.md` | Which checks actually ran, and which still need to run? |
-| `docs/DEPLOYMENT.md` | How do I host it, and what currently blocks publication? |
+| `docs/DEPLOYMENT.md` | Where is the live site, and how can I host this code? |
 | `docs/SECURITY.md` | What data protections exist and what are their limits? |
 | `docs/THIRD_PARTY.md` | Which models, packages, services and licenses are used? |
 

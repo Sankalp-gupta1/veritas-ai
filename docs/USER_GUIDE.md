@@ -1,5 +1,7 @@
 # Use VeritasAI without learning the code
 
+**[Open the live website](https://veritas-ai-v8lw.vercel.app/)** and wait for **Workspace ready**. No installation is needed. Source excerpts and claim checks need no AI API key.
+
 ## The three panels
 
 **Left: your library.** Add PDFs, choose which sources the app may use, or remove a document. A checkbox means “include this document when answering.” Clicking the file name opens it.
@@ -37,7 +39,7 @@ To get an AI-written explanation, open **AI settings**, choose Gemini and add yo
 3. Choose **Check a claim** and enter: “The Cedar trial enrolled 120 adults.”
 4. Open its citation. It should point to PDF page 1.
 5. Ask whether a company funded the trial. The sample does not provide that information, so the app should withhold that claim.
-6. Select the Cedar reanalysis too and compare statements about attention improvement. Inspect both sources when disagreement is flagged.
+6. Select the Cedar reanalysis too. Check: “The Cedar sleep-extension group improved its attention score by 12 points.” Open the supporting citation and the corrected report under **Evidence to compare**.
 
 The models can make mistakes even on these examples. That is why the actual quotes remain visible and the evaluation includes failure cases.
 
