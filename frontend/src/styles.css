@@ -2078,3 +2078,48 @@ nav button {
     font-size: 9px;
   }
 }
+
+
+/* VeritasAI charcoal theme: presentation-only overrides. */
+:root {color-scheme:dark;--ink:#ececf1;--muted:#a4a8b5;--purple:#b7a6f7;--line:#34363e;--green:#74bea0;--soft:#29263a;color:#ececf1;background:#212121;}
+body,.app-shell,.main-shell{background:#212121;color:#ececf1}
+.navigation{background:#171717;border-color:#343434}
+.brand-mark{background:#35353a;color:#f6f6f8}
+.new-button,.settings-button,.document-item,.document-open{color:#ececf1}
+.new-button{background:#2a2a2a;border-color:#424242;box-shadow:none}
+nav button{color:#b8b8bf}
+nav button:hover,.document-item:hover,.active-document,.icon-button:hover{background:#303036}
+nav button.nav-active{background:#35313f;color:#d3c5ff}
+.nav-pill,.avatar{background:#34343b;color:#cbcbd1;border-color:#4b4b53}
+.sidebar-section-heading,.private-workspace,.private-workspace small,.document-open small,.no-documents,.no-documents p,.no-documents small,.settings-button small{color:#a6a6b1}
+.upload-zone{background:#242428;border-color:#57545e;color:#b9b9c7}
+.upload-zone strong{color:#e5e5ea}
+.upload-zone span,.upload-zone small{color:#a1a1ab}
+.upload-zone:hover,.drag-active{background:#302d3a;border-color:#a99bea}
+.sidebar-footer,.settings-button{border-color:#36363a}
+.topbar{background:#212121;border-color:#363636}
+.breadcrumb,.topbar>div>svg,.connection-status,.help-button{color:#a5a5af}
+.conversation{background:radial-gradient(ellipse at 50% 18%,#2a273230,transparent 65%),#212121}
+.conversation-scroll{scrollbar-color:#505057 transparent}
+.welcome-label,.welcome-features{color:#aaa2ba}
+.hero-symbol{background:linear-gradient(135deg,#383341,#262630);border-color:#50465e;color:#c4b3ff}
+.hero-symbol>span{border-color:#212121}
+.welcome h1,.welcome h1 em{color:#eeeef2}
+.welcome h1 em{color:#b7a6f7}
+.welcome>p{color:#aeb0bb}
+.composer,.get-started-card,.question-suggestions button,.secondary-button,.sample-link button{background:#2c2c2f;border-color:#47474e;color:#e9e9ef;box-shadow:none}
+.composer:focus-within{border-color:#9184b5;box-shadow:0 0 0 2px #9184b51a}
+.composer textarea,.composer textarea:focus-visible{background:transparent;color:#f2f2f4}
+.composer textarea::placeholder{color:#9b9ba6}
+.composer-footnote,.composer-footnote button,.source-count,.model-button{color:#a7a7b2}
+.send-button,.primary-button{background:#a99ae3;color:#16151b}
+.send-button:hover,.primary-button:hover{background:#c6b9fa}
+.question-suggestions button:hover{background:#37353e}
+.answer-view,.question-heading,.answer-author,.claim-text,.panel-title{color:#eeeeF2}
+.claim-card,.evidence-panel,.document-detail,.viewer-toolbar,.abstention,.banner,.answer-caution,.counter-evidence,.check-details,.segmented,.status-badge,.citation-link{background-color:#29292e;color:#e5e5ed;border-color:#44444e}
+.status-badge{color:#d5c9ff}
+.citation-link,.excerpt-note button{color:#c7baff}
+input,select,textarea{color:#f1f1f5;background-color:#2c2c30;border-color:#4b4b55}
+input::placeholder,textarea::placeholder{color:#9e9eaa}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline-color:#b7a6ef}
+dialog,[role="dialog"]{background:#28282d;color:#f2f2f5;border-color:#4a4a52}
