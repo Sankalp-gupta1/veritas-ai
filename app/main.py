@@ -504,5 +504,18 @@ def sample_pdf(name: str):
 
 
 frontend = config.ROOT / "frontend" / "dist"
+
+
+@app.get("/", include_in_schema=False)
+@app.get("/index.html", include_in_schema=False)
+def frontend_shell():
+    # Always fetch the current shell. A cached shell can point to hashed bundles
+    # from a previous deployment that no longer exist at the production alias.
+    index = frontend / "index.html"
+    if not index.is_file():
+        raise HTTPException(503, "Build the frontend before opening the website.")
+    return FileResponse(index, headers={"Cache-Control": "no-store, max-age=0"})
+
+
 if frontend.exists():
     app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")
