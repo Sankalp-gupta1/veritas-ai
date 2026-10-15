@@ -115,6 +115,28 @@ def test_csrf_bad_upload_unknown_ids_and_missing_key(clients):
     assert alice.get(f"/api/documents/{did}/pages/900").status_code == 404
 
 
+def test_uploaded_conflicting_reports_are_both_visible(clients):
+    alice, _ = clients
+    ids = [
+        upload(alice, name).json()["id"]
+        for name in ("cedar-trial-report.pdf", "cedar-reanalysis.pdf")
+    ]
+    response = alice.post(
+        "/api/verify",
+        json={
+            "question": "The Cedar sleep-extension group improved its attention score by 12 points.",
+            "document_ids": ids,
+        },
+    )
+    assert response.status_code == 200, response.text
+    claim = response.json()["claims"][0]
+    assert claim["verdict"] == "conflict"
+    assert any(
+        c["document_id"] == ids[0] and c["relation"] == "supports" for c in claim["citations"]
+    )
+    assert any(c["document_id"] == ids[1] for c in claim["counter_evidence"])
+
+
 def test_comparison_reuses_draft_and_withholds_invented_citation(clients, monkeypatch):
     """A controlled generator tests the experiment wiring, not provider quality."""
     alice, _ = clients

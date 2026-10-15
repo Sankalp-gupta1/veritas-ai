@@ -4,7 +4,7 @@ import pytest
 
 from app.documents import chunk_pages, extract_pdf
 from app.generation import Draft
-from app.verification import check_claims, citation_for
+from app.verification import check_claims, citation_for, claim_check_draft
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -98,6 +98,23 @@ def test_conflicting_sources_are_preserved():
     )[0]
     assert result["verdict"] == "conflict"
     assert result["counter_evidence"][0]["document_id"] == "doc-2"
+
+
+def test_real_pdf_paragraphs_preserve_both_sides_of_disagreement():
+    context = []
+    for filename in ("cedar-trial-report.pdf", "cedar-reanalysis.pdf"):
+        pages = extract_pdf((ROOT / "samples" / filename).read_bytes())
+        for chunk in chunk_pages(pages):
+            if "attention score by" in chunk["text"]:
+                context.append(dict(passage(), **chunk, document_id=filename, name=filename))
+    claim = "The Cedar sleep-extension group improved its attention score by 12 points."
+    checked = check_claims(claim_check_draft(claim, context), context)[0]
+    assert checked["verdict"] == "conflict"
+    assert any(c["relation"] == "supports" for c in checked["citations"])
+    assert checked["counter_evidence"][0]["document_name"] == "cedar-reanalysis.pdf"
+    # Keep the full paragraph, including the correction, for readers to inspect.
+    assert "not 12 points" in checked["counter_evidence"][0]["quote"]
+    assert all(c["integrity"] for c in checked["citations"])
 
 
 def test_provider_json_does_not_accept_unbounded_or_extra_output():

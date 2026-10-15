@@ -15,7 +15,7 @@ from .config import (
 from .db import connection
 from .generation import SYSTEM, generate
 from .ml import embed, rerank
-from .verification import check_claims, extractive_claims
+from .verification import check_claims, claim_check_draft, extractive_claims
 
 
 def retrieve(workspace_id, question, document_ids):
@@ -124,12 +124,7 @@ def run_claim_check(workspace_id, claim, document_ids):
     started = perf_counter()
     candidates = retrieve(workspace_id, claim, document_ids)
     context = rerank(claim, candidates)[:5]
-    draft = [
-        {
-            "text": claim,
-            "citations": [{"chunk_id": p["id"], "quote": p["text"]} for p in context[:3]],
-        }
-    ]
+    draft = claim_check_draft(claim, context)
     claims = check_claims(draft, context)
     verdict = claims[0]["verdict"] if claims else "insufficient"
     return {

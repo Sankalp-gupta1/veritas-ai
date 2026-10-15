@@ -120,3 +120,23 @@ def extractive_claims(context):
         quote = next((s for s in sentences if 35 < len(s) <= 500), p["text"][:500])
         claims.append({"text": quote, "citations": [{"chunk_id": str(p["id"]), "quote": quote}]})
     return claims
+
+
+def claim_check_draft(claim, context):
+    """Find exact supporting sentences without discarding surrounding counterevidence.
+
+    A whole paragraph can confuse the NLI model when it describes several groups.
+    Rank bounded sentence quotes for support; check_claims still checks every full
+    retrieved passage for contradiction. No threshold is lowered for this path.
+    """
+    candidates = []
+    for passage in context[:5]:
+        sentences = re.split(r"(?<=[.!?])\s+", passage["text"])
+        quotes = [s for s in sentences[:12] if len(s) >= 20]
+        for quote in quotes or [passage["text"]]:
+            candidates.append({"chunk_id": passage["id"], "quote": quote})
+    relations = infer_relations([(item["quote"], claim) for item in candidates])
+    ranked = sorted(
+        zip(candidates, relations), key=lambda item: item[1].get("entailment", 0), reverse=True
+    )
+    return [{"text": claim, "citations": [item for item, _ in ranked[:3]]}]

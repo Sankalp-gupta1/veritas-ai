@@ -2123,3 +2123,38 @@ input,select,textarea{color:#f1f1f5;background-color:#2c2c30;border-color:#4b4b5
 input::placeholder,textarea::placeholder{color:#9e9eaa}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline-color:#b7a6ef}
 dialog,[role="dialog"]{background:#28282d;color:#f2f2f5;border-color:#4a4a52}
+
+/* Keep secondary screens and the sticky composer consistent with charcoal. */
+.composer-area {
+  background: linear-gradient(0deg, #212121 85%, #21212100);
+}
+.research-page, .history-page { background: #212121; }
+.panel-title, .metric-grid > div, .research-card, .history-list > button,
+.history-empty, .comparison button {
+  background: #29292e;
+  border-color: #44444e;
+  color: #ececf1;
+}
+.metric-grid strong, .history-list strong, .history-empty h2,
+.panel-title > span, .page-navigation strong, .modal label {
+  color: #ded9eb;
+}
+.lead, .research-card p, .chart-caption, .research-card details,
+.metric-grid span, .metric-grid small, .history-list small,
+.history-empty p, .modal .muted { color: #b2aebe; }
+.chart-note, .method-note, .privacy-note, .history-icon,
+.segmented .selected, .comparison button.active-comparison {
+  background: #35313f;
+  color: #d8cfee;
+}
+.modal input, .modal select {
+  background: #222226;
+  border-color: #57535f;
+  color: #f1edf7;
+}
+.research-card td, .research-card th, .variant-grid article {
+  border-color: #44444e;
+}
+.research-card .recharts-cartesian-axis-tick-value { fill: #bdb6cc; }
+.research-card .recharts-default-tooltip { color: #292530; }
+.mode-tabs button, .working-status { color: #bcb0d3; }
