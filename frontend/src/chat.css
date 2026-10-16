@@ -761,6 +761,7 @@
   font-size: 14px;
 }
 .modal {
+  color: #eeeeee;
   background: #282828;
   border: 1px solid #484848;
   border-radius: 20px;
@@ -961,4 +962,28 @@
   .welcome {
     padding-top: 20px;
   }
+}
+
+.chart-caption,
+.section-eyebrow {
+  font-size: 12px;
+}
+.research-card .recharts-default-tooltip {
+  color: #eeeeee;
+}
+.comparison h2 {
+  font-size: 18px;
+}
+.comparison > p {
+  font-size: 13px;
+  color: #b4b4b4;
+}
+.comparison strong {
+  font-size: 13px;
+  color: #ddd;
+}
+.comparison span,
+.comparison small {
+  font-size: 12px;
+  color: #bbb;
 }

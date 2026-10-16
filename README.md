@@ -10,7 +10,7 @@ VeritasAI is a research workspace that helps you ask questions about PDFs and ch
 
 A useful answer should let you ask, **“Where did that come from?”** In VeritasAI, each citation opens the exact PDF page and supporting text. If a claim is unsupported, the app withholds it. If retrieved sources appear to disagree, you can inspect both sides.
 
-**Live status, 15 October 2026:** the React website and FastAPI backend are running on Vercel with a connected PostgreSQL database and local search/checking models. PDF uploads, source excerpts and claim checks work without a paid AI key. The server has **no Gemini key configured**, so AI-written answers require your own key in **AI settings**. This is a working research prototype; it does not guarantee that a source or answer is true.
+**Live status, 16 October 2026:** the React website and FastAPI backend are running on Vercel with a connected PostgreSQL database and local search/checking models. PDF uploads, source excerpts and claim checks work without a paid AI key. The server has **no Gemini key configured**, so AI-written answers require your own key in **AI settings**. This is a working research prototype; it does not guarantee that a source or answer is true.
 
 ## Try it in two minutes — no installation
 
@@ -148,7 +148,7 @@ Three things remain separate:
 
 ## Tests and research
 
-Release checks on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38737165149): **23 Python tests and 2 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks**, with a separate desktop browser walkthrough. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
+Release checks on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38832182607): **23 Python tests and 7 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks on 15 October**, followed by a desktop review of the updated chat interface on 16 October. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
 
 ```bash
 python -m pytest tests/test_evidence.py -q

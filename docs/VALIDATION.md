@@ -6,6 +6,16 @@
 
 This record separates automated tests, real website checks and research measurements. Passing software tests does not prove that every answer is correct.
 
+## Chat interface review — 16 October 2026
+
+The interface now uses a centered question box, right-aligned question bubbles, a collapsible sidebar, recent-question shortcuts, and consistent charcoal surfaces. It remains a document research tool: each new question is independent.
+
+[GitHub Actions run 38832182607](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38832182607), for application commit `900fcf65fa0734dc689964e3c2592c49f8ac0cd5`, passed **23 Python tests, 7 React tests and the production build**. Five new React interaction tests cover sidebar collapse/source selection, the mobile drawer's focus and Escape behavior, successful submission and history reopening, Shift+Enter/IME handling, and retaining a failed request's draft. These component tests use a controlled API; they do not measure live model quality.
+
+The deployed desktop UI was also checked in Chrome. Sidebar collapse and the source picker worked. Sending the fictional Cedar 12-point claim produced **Possible disagreement**, cleared the composer, and added the result to Recent questions. Its citation opened the actual highlighted PDF text. Settings, history and the evidence lab were inspected; the review found and corrected low-contrast settings text and chart labels.
+
+The production HTML and JavaScript/CSS bundles returned HTTP 200, and health reported connected PostgreSQL and ready local models. The 84 API assertions below belong to the **15 October** run; they were not rerun for a presentation change. Full mobile viewport, screen-reader, real-provider and load testing remain outside this review.
+
 ## Automated checks
 
 [GitHub Actions run 38737165149](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38737165149) completed successfully against native PostgreSQL 17 with pgvector:

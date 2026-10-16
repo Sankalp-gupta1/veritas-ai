@@ -38,9 +38,11 @@ You do not need to read the whole project at once. Start with the README, run th
 | `frontend/src/Research.tsx` | Actual fixture graphs, saved-run count and recorded pipeline times. |
 | `frontend/src/api.ts` | Shared HTTP helper and JSON download helper. |
 | `frontend/src/types.ts` | Describes the data structures the interface expects. |
-| `frontend/src/styles.css` | Colors, spacing, type, responsive layout, focus states and reduced-motion support. |
+| `frontend/src/styles.css` | Base layouts, document viewer, charts and reduced-motion support. |
+| `frontend/src/chat.css` | Chat appearance: charcoal colors, readable text, sidebar, composer, message bubbles and small-screen layout. |
 | `frontend/src/vite-env.d.ts` | Makes Vite's environment types available to TypeScript. |
 | `frontend/public/favicon.svg` | Small VeritasAI icon used by browser tabs. |
+| `frontend/src/App.test.tsx` | Tests navigation, sending questions, saved history, keyboard input and retry drafts with controlled API responses. |
 | `frontend/src/ClaimCard.test.tsx` | Tests citation clicks and safe rendering of model-provided text. |
 | `frontend/vite.config.ts` | Development API proxy and frontend test/build settings. |
 | `frontend/tsconfig.json` | TypeScript compiler rules. |

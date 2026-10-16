@@ -636,7 +636,7 @@ export default function App() {
             <div className="section-eyebrow">
               <History size={15} /> YOUR RESEARCH TRAIL
             </div>
-            <h1>Every question, kept in context.</h1>
+            <h1>Your past questions.</h1>
             <p className="lead">
               Revisit the answer, its sources, and the checks behind it.
             </p>
@@ -660,7 +660,14 @@ export default function App() {
                       <strong>{run.question}</strong>
                       <small>
                         {new Date(run.created_at).toLocaleDateString()} ·{" "}
-                        {run.variant} · {(run.latency_ms / 1000).toFixed(1)}s
+                        {run.variant === "claim_check"
+                          ? "Claim check"
+                          : run.variant === "rag"
+                            ? "Standard RAG"
+                            : run.variant === "rerank"
+                              ? "Reranked answer"
+                              : "Verified answer"}{" "}
+                        · {(run.latency_ms / 1000).toFixed(1)}s
                         {run.abstained ? " · insufficient evidence" : ""}
                       </small>
                     </span>

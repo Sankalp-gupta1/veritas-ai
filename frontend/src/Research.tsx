@@ -104,10 +104,21 @@ export function Research({ runs }: { runs: Run[] }) {
             >
               <ResponsiveContainer width="100%" height={270}>
                 <BarChart data={metrics.per_class}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid
+                    stroke="#484848"
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
                   <XAxis dataKey="label" tickLine={false} axisLine={false} />
                   <YAxis domain={[0, 1]} tickLine={false} axisLine={false} />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#2b2b2b",
+                      border: "1px solid #555",
+                      borderRadius: 10,
+                    }}
+                    labelStyle={{ color: "#eee" }}
+                  />
                   <Legend />
                   <Bar
                     dataKey="precision"
@@ -115,7 +126,7 @@ export function Research({ runs }: { runs: Run[] }) {
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar dataKey="recall" fill="#8172da" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="f1" fill="#403461" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="f1" fill="#8bd4bd" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
