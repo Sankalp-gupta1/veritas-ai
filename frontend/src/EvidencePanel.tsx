@@ -71,12 +71,14 @@ export function EvidencePanel({
         <div className="segmented">
           <button
             className={mode === "text" ? "selected" : ""}
+            aria-pressed={mode === "text"}
             onClick={() => setMode("text")}
           >
             Evidence
           </button>
           <button
             className={mode === "pdf" ? "selected" : ""}
+            aria-pressed={mode === "pdf"}
             onClick={() => setMode("pdf")}
           >
             PDF

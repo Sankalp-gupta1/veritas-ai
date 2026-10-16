@@ -6,11 +6,17 @@
 
 **Left: your library.** Add PDFs, choose which sources the app may use, or remove a document. A checkbox means “include this document when answering.” Clicking the file name opens it.
 
-**Middle: your question and answer.** Write a question at the bottom. The answer appears as individual claims so that each statement can be checked separately.
+**Middle: your question and answer.** Start in the centered question box. Your question appears in a bubble on the right; the answer appears below it as individual claims. After an answer, the question box stays at the bottom.
 
 **Right: the evidence.** Click a source under a claim to open this panel. “Evidence” shows extracted text with the exact quote highlighted. “PDF” opens the original page. The arrows change pages.
 
-On a small screen, the menu button opens the library and the evidence panel takes the available width. Close the evidence panel to return to your answer.
+Use **Close sidebar** to make more space, or **Open sidebar** to bring your library back. The most recent five questions appear in the sidebar. **Answer history** shows the full saved list.
+
+The **+** button inside the question box attaches PDFs. Click the source count to choose which documents to search. **Enter** sends the question; **Shift+Enter** adds a new line. A successful send clears the box. If a request fails, your draft stays there so you can retry.
+
+On a small screen, the sidebar opens as a drawer. Press **Escape**, click outside it, or use its close button to return. The evidence panel takes the available width; close it to return to the answer.
+
+**Each question is independent.** The app searches the selected documents; it does not send previous answers as conversation memory. Include the subject in your next question instead of writing only “tell me more.”
 
 ## Ask a question or check a statement
 

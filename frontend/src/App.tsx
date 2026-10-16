@@ -12,12 +12,9 @@ import {
   FlaskConical,
   FolderOpen,
   History,
-  Layers3,
   LoaderCircle,
-  Menu,
   MessageSquare,
   Plus,
-  Search,
   Settings2,
   ShieldCheck,
   Sparkles,
@@ -25,6 +22,8 @@ import {
   X,
   AlertCircle,
   PanelLeftClose,
+  PanelLeftOpen,
+  SquarePen,
   LockKeyhole,
 } from "lucide-react";
 import { api, exportJson } from "./api";
@@ -72,9 +71,69 @@ export default function App() {
   const [activeDoc, setActiveDoc] = useState<string | null>(null);
   const [citation, setCitation] = useState<Citation | null>(null);
   const [sidebar, setSidebar] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia("(max-width: 700px)").matches,
+  );
+  const navigationVisible = mobile ? sidebar : !sidebarCollapsed;
+  const navigation = useRef<HTMLElement>(null);
+  const navigationToggle = useRef<HTMLButtonElement>(null);
+  const navigationClose = useRef<HTMLButtonElement>(null);
   const [drag, setDrag] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const textInput = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const screen = window.matchMedia("(max-width: 700px)");
+    const update = () => {
+      setMobile(screen.matches);
+      setSidebar(false);
+    };
+    screen.addEventListener("change", update);
+    return () => screen.removeEventListener("change", update);
+  }, []);
+
+  function closeNavigation() {
+    setSidebar(false);
+    setSidebarCollapsed(true);
+    requestAnimationFrame(() => navigationToggle.current?.focus());
+  }
+  function openNavigation() {
+    setSidebarCollapsed(false);
+    setSidebar(true);
+  }
+
+  useEffect(() => {
+    if (!mobile || !sidebar) return;
+    navigationClose.current?.focus();
+    // Keep keyboard navigation inside the mobile drawer while the page is inert.
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") closeNavigation();
+      if (event.key !== "Tab") return;
+      const controls = navigation.current?.querySelectorAll<HTMLElement>(
+        "button:not(:disabled), a[href], input:not(:disabled):not([hidden])",
+      );
+      if (!controls?.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [mobile, sidebar]);
+
+  useEffect(() => {
+    const input = textInput.current;
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
+  }, [question, view]);
 
   async function loadData() {
     const [d, r] = await Promise.all([
@@ -172,7 +231,9 @@ export default function App() {
     }
   }
   async function ask(compare = false) {
-    if (!question.trim() || !selected.length || busy || !ready) return;
+    const submittedQuestion =
+      question.trim() || (compare ? answer?.question : "");
+    if (!submittedQuestion || !selected.length || busy || !ready) return;
     if (compare && settings.provider === "extractive") {
       setShowSettings(true);
       return;
@@ -187,7 +248,7 @@ export default function App() {
     setComparison([]);
     try {
       const body = JSON.stringify({
-        question: question.trim(),
+        question: submittedQuestion,
         document_ids: selected,
         variant: "verified",
         provider: settings.provider,
@@ -211,11 +272,13 @@ export default function App() {
             headers,
           }),
         );
+      setQuestion("");
       await loadData();
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy("");
+      requestAnimationFrame(() => textInput.current?.focus());
     }
   }
   async function removeDocument(doc: DocumentRecord) {
@@ -245,8 +308,11 @@ export default function App() {
     try {
       const r = await api<Answer>(`/runs/${id}`);
       setAnswer(r);
-      setQuestion(r.question);
+      setQuestion("");
+      setQueryMode(r.answer_kind === "claim_check" ? "verify" : "ask");
       setComparison([]);
+      setActiveDoc(null);
+      setSidebar(false);
       setView("workspace");
     } catch (e) {
       setError((e as Error).message);
@@ -261,6 +327,11 @@ export default function App() {
     setAnswer(null);
     setComparison([]);
     setQuestion("");
+    setActiveDoc(null);
+    setCitation(null);
+    setSidebar(false);
+    setError("");
+    setNotice("");
     setView("workspace");
     setTimeout(() => textInput.current?.focus(), 50);
   }
@@ -269,27 +340,44 @@ export default function App() {
     answer?.claims.filter((c) => c.verdict !== "not_checked").length || 0;
 
   return (
-    <div className="app-shell">
-      <aside className={`navigation ${sidebar ? "mobile-open" : ""}`}>
-        <a
-          href="#"
-          className="brand"
-          onClick={(e) => {
-            e.preventDefault();
-            setView("workspace");
-          }}
-          aria-label="VeritasAI home"
-        >
-          <span className="brand-mark">
-            <Check size={23} strokeWidth={2.8} />
-          </span>
-          <span>
-            veritas<span className="brand-ai">ai</span>
-            <small>FOLLOW THE EVIDENCE</small>
-          </span>
-        </a>
-        <button className="new-button" onClick={newQuestion}>
-          <Plus size={17} /> New question <span>↗</span>
+    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+      <aside
+        id="workspace-navigation"
+        ref={navigation}
+        className={`navigation ${sidebar ? "mobile-open" : ""}`}
+        aria-label="Workspace navigation"
+        inert={!navigationVisible}
+      >
+        <div className="navigation-header">
+          <a
+            href="#"
+            className="brand"
+            onClick={(e) => {
+              e.preventDefault();
+              setView("workspace");
+              setSidebar(false);
+            }}
+            aria-label="VeritasAI home"
+          >
+            <span className="brand-mark">
+              <Check size={23} strokeWidth={2.8} />
+            </span>
+            <span>
+              veritas<span className="brand-ai">ai</span>
+            </span>
+          </a>
+          <button
+            ref={navigationClose}
+            className="icon-button"
+            aria-label="Close sidebar"
+            title="Close sidebar"
+            onClick={closeNavigation}
+          >
+            <PanelLeftClose size={20} />
+          </button>
+        </div>
+        <button className="new-button" onClick={newQuestion} disabled={!!busy}>
+          <SquarePen size={18} /> New question
         </button>
         <nav aria-label="Main navigation">
           <button
@@ -322,101 +410,112 @@ export default function App() {
             <span className="nav-count">{runs.length}</span>
           </button>
         </nav>
-        <div className="sidebar-section-heading">
-          <span>YOUR DOCUMENTS</span>
+        <div className="sidebar-scroll">
+          {runs.length > 0 && (
+            <section className="recent-questions" aria-label="Recent questions">
+              <h2>Recent questions</h2>
+              {runs.slice(0, 5).map((run) => (
+                <button
+                  key={run.id}
+                  className={answer?.id === run.id ? "current-question" : ""}
+                  aria-current={answer?.id === run.id ? "page" : undefined}
+                  title={run.question}
+                  disabled={!!busy}
+                  onClick={() => void openRun(run.id)}
+                >
+                  {run.question}
+                </button>
+              ))}
+            </section>
+          )}
+          <div className="sidebar-section-heading">
+            <span>Your documents</span>
+            <button
+              className="icon-button"
+              aria-label="Upload documents"
+              disabled={!ready || !!busy}
+              onClick={() => fileInput.current?.click()}
+            >
+              <Plus size={17} />
+            </button>
+          </div>
+          <div className="document-list">
+            {documents.length === 0 ? (
+              <div className="no-documents">
+                <FolderOpen size={30} />
+                <p>A home for your sources.</p>
+                <small>Your uploaded PDFs will appear here.</small>
+              </div>
+            ) : (
+              documents.map((doc) => (
+                <div
+                  className={`document-item ${activeDoc === doc.id ? "active-document" : ""}`}
+                  key={doc.id}
+                >
+                  <input
+                    aria-label={`Include ${doc.name} in search`}
+                    type="checkbox"
+                    checked={selected.includes(doc.id)}
+                    disabled={!!busy}
+                    onChange={(e) =>
+                      setSelected((s) =>
+                        e.target.checked
+                          ? [...s, doc.id]
+                          : s.filter((x) => x !== doc.id),
+                      )
+                    }
+                  />
+                  <button
+                    className="document-open"
+                    onClick={() => {
+                      setActiveDoc(doc.id);
+                      setCitation(null);
+                      setView("workspace");
+                      setSidebar(false);
+                    }}
+                  >
+                    <FileText size={19} />
+                    <span>
+                      <strong title={doc.name}>{doc.name}</strong>
+                      <small>
+                        {doc.page_count} pages ·{" "}
+                        {(doc.byte_count / 1000).toFixed(0)} KB
+                      </small>
+                    </span>
+                  </button>
+                  <button
+                    className="delete-document icon-button"
+                    aria-label={`Remove ${doc.name}`}
+                    disabled={!!busy}
+                    onClick={() => void removeDocument(doc)}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
           <button
-            className="icon-button"
-            aria-label="Upload documents"
+            className={`upload-zone ${drag ? "drag-active" : ""}`}
             disabled={!ready || !!busy}
             onClick={() => fileInput.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDrag(true);
+            }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDrag(false);
+              void uploadFiles(Array.from(e.dataTransfer.files));
+            }}
           >
-            <Plus size={17} />
+            <FilePlus2 size={20} />
+            <strong>Add your documents</strong>
+            <span>Drop PDFs here or browse files</span>
+            <small>Up to 4 MB and 80 pages per PDF</small>
           </button>
         </div>
-        <div className="document-list">
-          {documents.length === 0 ? (
-            <div className="no-documents">
-              <FolderOpen size={30} />
-              <p>A home for your sources.</p>
-              <small>Your uploaded PDFs will appear here.</small>
-            </div>
-          ) : (
-            documents.map((doc) => (
-              <div
-                className={`document-item ${activeDoc === doc.id ? "active-document" : ""}`}
-                key={doc.id}
-              >
-                <input
-                  aria-label={`Include ${doc.name} in search`}
-                  type="checkbox"
-                  checked={selected.includes(doc.id)}
-                  disabled={!!busy}
-                  onChange={(e) =>
-                    setSelected((s) =>
-                      e.target.checked
-                        ? [...s, doc.id]
-                        : s.filter((x) => x !== doc.id),
-                    )
-                  }
-                />
-                <button
-                  className="document-open"
-                  onClick={() => {
-                    setActiveDoc(doc.id);
-                    setCitation(null);
-                    setView("workspace");
-                    setSidebar(false);
-                  }}
-                >
-                  <FileText size={19} />
-                  <span>
-                    <strong title={doc.name}>{doc.name}</strong>
-                    <small>
-                      {doc.page_count} pages ·{" "}
-                      {(doc.byte_count / 1000).toFixed(0)} KB
-                    </small>
-                  </span>
-                </button>
-                <button
-                  className="delete-document icon-button"
-                  aria-label={`Remove ${doc.name}`}
-                  disabled={!!busy}
-                  onClick={() => void removeDocument(doc)}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-        <button
-          className={`upload-zone ${drag ? "drag-active" : ""}`}
-          disabled={!ready || !!busy}
-          onClick={() => fileInput.current?.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDrag(true);
-          }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDrag(false);
-            void uploadFiles(Array.from(e.dataTransfer.files));
-          }}
-        >
-          <FilePlus2 size={20} />
-          <strong>Add your documents</strong>
-          <span>Drop PDFs here or browse files</span>
-          <small>Up to 4 MB and 80 pages per PDF</small>
-        </button>
-        <input
-          type="file"
-          ref={fileInput}
-          accept="application/pdf,.pdf"
-          multiple
-          hidden
-          onChange={(e) => void uploadFiles(Array.from(e.target.files || []))}
-        />
         <div className="sidebar-footer">
           <div className="private-workspace">
             <LockKeyhole size={15} />
@@ -427,7 +526,10 @@ export default function App() {
           </div>
           <button
             className="settings-button"
-            onClick={() => setShowSettings(true)}
+            onClick={() => {
+              setSidebar(false);
+              setShowSettings(true);
+            }}
           >
             <span className="avatar">V</span>
             <span>
@@ -444,28 +546,40 @@ export default function App() {
           </button>
         </div>
       </aside>
-      {sidebar && (
+      <input
+        type="file"
+        ref={fileInput}
+        accept="application/pdf,.pdf"
+        multiple
+        hidden
+        onChange={(e) => void uploadFiles(Array.from(e.target.files || []))}
+      />
+      {mobile && sidebar && (
         <button
           className="sidebar-scrim"
           aria-label="Close navigation"
-          onClick={() => setSidebar(false)}
+          onClick={closeNavigation}
+          tabIndex={-1}
         />
       )}
-      <div className="main-shell">
+      <div className="main-shell" inert={mobile && sidebar}>
         <header className="topbar">
           <div>
             <button
-              className="mobile-menu icon-button"
-              aria-label="Open navigation"
-              onClick={() => setSidebar(true)}
+              ref={navigationToggle}
+              className="navigation-toggle icon-button"
+              aria-label="Open sidebar"
+              aria-controls="workspace-navigation"
+              aria-expanded={navigationVisible}
+              hidden={navigationVisible}
+              title="Open sidebar"
+              onClick={openNavigation}
             >
-              <Menu size={20} />
+              <PanelLeftOpen size={20} />
             </button>
-            <span className="breadcrumb">Your library</span>
-            <ChevronRight size={14} />
             <strong>
               {view === "workspace"
-                ? "Research workspace"
+                ? "VeritasAI"
                 : view === "research"
                   ? "Evidence lab"
                   : "Answer history"}
@@ -560,87 +674,46 @@ export default function App() {
           <div
             className={`workspace-layout ${currentDoc ? "with-evidence" : ""}`}
           >
-            <main className="conversation">
+            <main
+              className={`conversation ${!answer ? "empty-conversation" : ""}`}
+            >
               <div className="conversation-scroll">
                 {!answer ? (
                   <div className="welcome">
-                    <div className="welcome-label">
-                      <span /> YOUR SOURCE-GROUNDED RESEARCH PARTNER
-                    </div>
-                    <div className="hero-symbol">
-                      <Layers3 size={36} strokeWidth={1.3} />
-                      <span>
-                        <Check size={12} />
-                      </span>
-                    </div>
                     <h1>
-                      Good answers.
-                      <br />
-                      <em>Evidence you can see.</em>
+                      {documents.length
+                        ? "What would you like to research?"
+                        : "Start with a document."}
                     </h1>
                     <p>
-                      Bring your papers. Ask better questions.
-                      <br />
-                      Follow every claim back to the source.
+                      {documents.length
+                        ? "Ask your documents. Follow every claim to its source."
+                        : "Upload a PDF to ask questions and check the evidence."}
                     </p>
-                    <div className="welcome-features">
-                      <span>
-                        <Search size={15} /> Find relevant evidence
-                      </span>
-                      <span>
-                        <ShieldCheck size={15} /> Check individual claims
-                      </span>
-                    </div>
-                    {documents.length === 0 ? (
-                      <div className="get-started-card">
-                        <div>
-                          <span className="step-number">01</span>
-                          <h3>Start with your sources</h3>
-                          <p>
-                            Upload research papers or reports to build your
-                            private document library.
-                          </p>
-                        </div>
+                    {documents.length === 0 && (
+                      <div className="welcome-actions">
                         <button
                           className="primary-button"
                           disabled={!ready || !!busy}
                           onClick={() => fileInput.current?.click()}
                         >
-                          Upload PDFs <Plus size={17} />
+                          <Plus size={17} /> Upload PDFs
                         </button>
-                        <div className="sample-link">
-                          <span>Want to explore first?</span>
-                          <button
-                            disabled={!ready || !!busy}
-                            onClick={() => void loadSamples()}
-                          >
-                            Try our authored sample documents{" "}
-                            <ArrowUpRight size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="question-suggestions">
-                        <span>A FEW PLACES TO START</span>
-                        {questions.map((q) => (
-                          <button
-                            key={q}
-                            onClick={() => {
-                              setQuestion(q);
-                              textInput.current?.focus();
-                            }}
-                          >
-                            {q}
-                            <ArrowUpRight size={15} />
-                          </button>
-                        ))}
+                        <button
+                          className="sample-button"
+                          disabled={!ready || !!busy}
+                          onClick={() => void loadSamples()}
+                        >
+                          Try our authored sample documents{" "}
+                          <ArrowUpRight size={15} />
+                        </button>
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="answer-view">
                     <div className="question-heading">
-                      <span className="avatar user-avatar">Y</span>
+                      <span className="sr-only">Your question</span>
                       <h1>{answer.question}</h1>
                     </div>
                     <div className="answer-author">
@@ -764,12 +837,16 @@ export default function App() {
                 >
                   <button
                     className={queryMode === "ask" ? "active" : ""}
+                    aria-pressed={queryMode === "ask"}
+                    disabled={!!busy}
                     onClick={() => setQueryMode("ask")}
                   >
                     Ask your documents
                   </button>
                   <button
                     className={queryMode === "verify" ? "active" : ""}
+                    aria-pressed={queryMode === "verify"}
+                    disabled={!!busy}
                     onClick={() => setQueryMode("verify")}
                   >
                     Check a claim <ShieldCheck size={12} />
@@ -803,7 +880,7 @@ export default function App() {
                           ? "Ask a question about your selected documents…"
                           : "Upload a document, then ask anything about it…"
                     }
-                    rows={2}
+                    rows={1}
                     maxLength={1000}
                     disabled={!ready || !!busy}
                     onKeyDown={(e) => {
@@ -819,11 +896,27 @@ export default function App() {
                   />
                   <div className="composer-bottom">
                     <div>
-                      <span className="source-count">
+                      <button
+                        type="button"
+                        className="icon-button attach-button"
+                        aria-label="Attach PDFs"
+                        title="Attach PDFs"
+                        disabled={!ready || !!busy}
+                        onClick={() => fileInput.current?.click()}
+                      >
+                        <Plus size={21} />
+                      </button>
+                      <button
+                        type="button"
+                        className="source-count"
+                        title="Choose documents to search"
+                        aria-label={`Choose sources (${selected.length} selected)`}
+                        onClick={openNavigation}
+                      >
                         <FileText size={14} />
                         {selected.length} source
                         {selected.length === 1 ? "" : "s"}
-                      </span>
+                      </button>
                       <button
                         type="button"
                         className="model-button"
@@ -845,20 +938,21 @@ export default function App() {
                         !ready || !!busy || !question.trim() || !selected.length
                       }
                     >
-                      <ArrowUp size={20} />
+                      {busy ? (
+                        <LoaderCircle size={20} className="spin" />
+                      ) : (
+                        <ArrowUp size={20} />
+                      )}
                     </button>
                   </div>
                 </form>
                 <div className="composer-footnote">
-                  <span>
-                    <LockKeyhole size={11} /> Your sources stay in this
-                    workspace.
-                  </span>
+                  <span>Each question searches your selected PDFs.</span>
                   <button
                     disabled={
                       !ready ||
                       !!busy ||
-                      !question.trim() ||
+                      !(question.trim() || answer?.question) ||
                       !selected.length ||
                       queryMode === "verify"
                     }
@@ -867,6 +961,26 @@ export default function App() {
                     <FlaskConical size={12} /> Compare methods
                   </button>
                 </div>
+                {!answer && documents.length > 0 && (
+                  <div
+                    className="starter-prompts"
+                    aria-label="Suggested questions"
+                  >
+                    {questions.map((q) => (
+                      <button
+                        key={q}
+                        disabled={!!busy}
+                        onClick={() => {
+                          setQueryMode("ask");
+                          setQuestion(q);
+                          textInput.current?.focus();
+                        }}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </main>
             {currentDoc && (

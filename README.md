@@ -35,7 +35,7 @@ The sample PDFs are fictional examples written for testing. They are not real re
 | Follow the evidence | Open the original PDF, physical page number, exact quote and highlighted extracted text. |
 | Review uncertainty | See supported, contradicted, insufficient and possible-disagreement labels. |
 | Compare methods | With a generative model connected, run normal RAG, reranked RAG and verified RAG on the same question. |
-| Keep a research trail | Reopen saved answers and download a JSON evidence record. |
+| Keep a research trail | Reopen recent questions from the collapsible sidebar, browse all saved answers, and download a JSON evidence record. |
 | Inspect experiments | The evidence lab shows actual fixture measurements, including failures. |
 
 ## Start in one command with Docker

@@ -23,6 +23,7 @@ export function SettingsDialog({
     <dialog
       ref={dialog}
       className="modal"
+      aria-labelledby="settings-title"
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === dialog.current) onClose();
@@ -47,7 +48,7 @@ export function SettingsDialog({
             <X size={20} />
           </button>
         </div>
-        <h2>Your research, your AI</h2>
+        <h2 id="settings-title">Your research, your AI</h2>
         <p className="muted">
           Local search and evidence checks work without a key. Connect Gemini
           for AI-written answers and RAG comparisons.
