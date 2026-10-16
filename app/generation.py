@@ -63,6 +63,7 @@ def generate(question, context, provider="gemini", key=None, model=None):
                     "temperature": 0,
                     "maxOutputTokens": 3500,
                     "responseMimeType": "application/json",
+                    "responseJsonSchema": Draft.model_json_schema(),
                 },
             }
             headers = {"x-goog-api-key": key}
@@ -121,6 +122,12 @@ def generate(question, context, provider="gemini", key=None, model=None):
                     "promptTokenCount": data.get("prompt_eval_count"),
                     "candidatesTokenCount": data.get("eval_count"),
                 }
+            if provider == "gemini":
+                finish_reason = data.get("candidates", [{}])[0].get("finishReason")
+                if finish_reason == "MAX_TOKENS":
+                    raise ProviderError("The AI answer exceeded its output limit. Try a narrower question.")
+                if not text.strip():
+                    raise ProviderError("The AI returned no usable text. Please try again.")
             parsed = Draft.model_validate_json(text)
             return parsed.model_dump()["claims"], {
                 "provider": provider,
