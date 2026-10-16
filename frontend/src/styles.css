@@ -2157,3 +2157,21 @@ dialog,[role="dialog"]{background:#28282d;color:#f2f2f5;border-color:#4a4a52}
 .research-card .recharts-cartesian-axis-tick-value { fill: #bdb6cc; }
 .research-card .recharts-default-tooltip { color: #292530; }
 .mode-tabs button, .working-status { color: #bcb0d3; }
+
+/* Structured, evidence-first answer presentation */
+.guided-answer{margin:25px 0 30px;padding:24px 26px;border:1px solid #3a3a45;border-radius:18px;background:#28282c;color:#ededf2}
+.guided-eyebrow{font-size:10px;letter-spacing:.16em;font-weight:700;color:#b9a8fa;margin-bottom:9px}
+.guided-answer h2{font-size:22px;font-weight:650;letter-spacing:-.035em;margin:0 0 10px;color:#f2f2f6}
+.guided-answer h3{font-size:16px;margin:26px 0 6px;color:#f0edf8}
+.guided-intro{font-size:13px;line-height:1.7;color:#afb0ba;margin:0 0 16px}
+.guided-steps{list-style:none;padding:0;margin:0;counter-reset:none}
+.guided-steps li{border-top:1px solid #414149;padding:17px 0}
+.guided-steps strong{font-size:14px;color:#d0c1ff;font-weight:600}
+.guided-steps p{font-size:14px;line-height:1.85;color:#ececf0;margin:9px 0}
+.guided-steps small{display:block;color:#e5c18c;font-size:12px;margin-top:8px}
+.guided-cites{display:flex;flex-wrap:wrap;gap:8px}
+.guided-cites button{background:#34323e;border:1px solid #504a60;border-radius:24px;color:#d9d0ff;font-size:12px;padding:7px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.guided-cites button:hover{background:#464054}
+.guided-tip{display:grid;gap:7px;margin-top:6px;background:#302d3a;padding:14px;border-radius:12px;font-size:12px;line-height:1.7;color:#bfc0cc}
+.guided-tip strong{color:#ded6ff}
+@media(max-width:640px){.guided-answer{padding:17px 15px;margin:18px 0}.guided-answer h2{font-size:19px}}
