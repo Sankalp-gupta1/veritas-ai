@@ -10,5 +10,11 @@
       "includeFiles": "{models/**,frontend/dist/**,samples/**,research/results/fixture_metrics.json}",
       "excludeFiles": "{tmp/**,tests/**,docs/**,.env*,frontend/node_modules/**,research/private-runs/**}"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/assets/:path*",
+      "destination": "/api/static/:path*"
+    }
+  ]
 }
