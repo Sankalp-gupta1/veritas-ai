@@ -108,27 +108,42 @@ def generate(question, context, provider="gemini", key=None, model=None):
                 raise ProviderError(
                     "The AI provider could not complete this request. No answer was saved."
                 )
-            data = response.json()
-            if provider == "gemini":
-                text = "".join(
-                    part.get("text", "")
-                    for part in data["candidates"][0]["content"]["parts"]
-                    if not part.get("thought")
-                )
-                usage = data.get("usageMetadata", {})
-            else:
-                text = data["message"]["content"]
-                usage = {
-                    "promptTokenCount": data.get("prompt_eval_count"),
-                    "candidatesTokenCount": data.get("eval_count"),
-                }
-            if provider == "gemini":
-                finish_reason = data.get("candidates", [{}])[0].get("finishReason")
-                if finish_reason == "MAX_TOKENS":
-                    raise ProviderError("The AI answer exceeded its output limit. Try a narrower question.")
-                if not text.strip():
-                    raise ProviderError("The AI returned no usable text. Please try again.")
-            parsed = Draft.model_validate_json(text)
+            # A successful HTTP status does not guarantee a complete JSON draft.
+            # Retry once for schema/format failures; never skip claim verification.
+            parsed = None
+            for format_attempt in range(2 if provider == "gemini" else 1):
+                data = response.json()
+                if provider == "gemini":
+                    candidates = data.get("candidates") or []
+                    candidate = candidates[0] if candidates else {}
+                    reason = candidate.get("finishReason")
+                    if reason in ("SAFETY", "PROHIBITED_CONTENT", "SPII", "BLOCKLIST"):
+                        raise ProviderError("The AI provider declined this request. No answer was verified.")
+                    if reason == "MAX_TOKENS":
+                        raise ProviderError("The AI answer exceeded its output limit. Try a narrower question.")
+                    parts = (candidate.get("content") or {}).get("parts") or []
+                    text = "".join(part.get("text", "") for part in parts if not part.get("thought"))
+                    usage = data.get("usageMetadata", {})
+                else:
+                    text = data["message"]["content"]
+                    usage = {
+                        "promptTokenCount": data.get("prompt_eval_count"),
+                        "candidatesTokenCount": data.get("eval_count"),
+                    }
+                try:
+                    parsed = Draft.model_validate_json(text)
+                    break
+                except Exception:
+                    if format_attempt == 0 and provider == "gemini":
+                        response = client.post(url, headers=headers, json=body)
+                        if response.is_error:
+                            raise ProviderError("The AI provider could not complete the retry. No answer was verified.")
+                    else:
+                        raise ProviderError(
+                            "The AI returned an invalid answer format after retry. No answer was verified."
+                        )
+            if parsed is None:
+                raise ProviderError("The AI returned no valid claims. No answer was verified.")
             return parsed.model_dump()["claims"], {
                 "provider": provider,
                 "model": model,
