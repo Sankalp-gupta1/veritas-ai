@@ -6,6 +6,34 @@
 
 This record separates automated tests, real website checks and research measurements. Passing software tests does not prove that every answer is correct.
 
+## Privacy review — 16 October 2026
+
+Reviewed the data flow at application commit `bea266a8426b7af9e5f82d29fac5869f76c20eff`, then added the privacy explanations and browser-key handling change described below. The review covered the code, official provider policies and a focused live run. It did not inspect existing users' documents or use a real Gemini key.
+
+**30/30 live assertions passed.** [Raw result](evidence/privacy-live-2026-10-16.json). Both fresh test workspaces were deleted. The live server reported connected PostgreSQL, ready local models and no configured server Gemini key.
+
+| Check | Observed result |
+|---|---|
+| Authentication and request origin | Anonymous document access rejected; missing app header and foreign-origin mutations rejected |
+| Workspace separation | Other workspace could not read the PDF, page or saved answer, query the selected document, or delete it |
+| Cookie and caching controls | Secure, HttpOnly and SameSite=Strict cookies; no-store API and PDF responses |
+| Original-file delivery | Downloaded bytes matched the fictional upload; PDF response included a sandbox policy |
+| Deletion | Owner deleted the PDF; it became unavailable and saved source text was cleared from history |
+| Sensitive static paths | Configuration and Git metadata paths returned 404 |
+| Cleanup | Both disposable workspaces returned HTTP 204 on deletion |
+
+The interface previously attached an entered Gemini key to local requests as well as Gemini requests. The update sends it only for Gemini generation, reducing unnecessary transfer to the backend. It also explains server storage in the sidebar/settings and removes an unsupported “documents are safe” assurance from provider network errors.
+
+Local validation after this change: **10 React tests passed**, including three key-handling cases; **6 provider tests passed**, including exact outbound payload checks with a fictional key. These controlled tests do not establish Google's internal data handling. The historical full-suite runs below retain their original counts and dates.
+
+Reproduce the live check with a fresh report path:
+
+```bash
+python scripts/check_privacy_live.py --base-url https://veritas-ai-v8lw.vercel.app --out tmp/privacy-check.json
+```
+
+This checks exposed application boundaries, not backup erasure, cloud permissions, log drains, a complete dependency/secret-history audit or resistance to every attack. The result does not prove that a leak is impossible. See [the privacy guide](PRIVACY.md).
+
 ## Chat interface review — 16 October 2026
 
 The interface now uses a centered question box, right-aligned question bubbles, a collapsible sidebar, recent-question shortcuts, and consistent charcoal surfaces. It remains a document research tool: each new question is independent.

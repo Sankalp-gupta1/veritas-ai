@@ -34,7 +34,7 @@ You do not need to read the whole project at once. Start with the README, run th
 | `frontend/src/App.tsx` | Main workspace: library, uploads, selected files, questions, history and comparison. |
 | `frontend/src/ClaimCard.tsx` | One claim, its status, citations and explanation. |
 | `frontend/src/EvidencePanel.tsx` | Original PDF and extracted page text with the matching quote highlighted. |
-| `frontend/src/SettingsDialog.tsx` | Model choice and private, tab-memory API-key input. |
+| `frontend/src/SettingsDialog.tsx` | Model choice, tab-memory API-key input and data-flow notices. |
 | `frontend/src/Research.tsx` | Actual fixture graphs, saved-run count and recorded pipeline times. |
 | `frontend/src/api.ts` | Shared HTTP helper and JSON download helper. |
 | `frontend/src/types.ts` | Describes the data structures the interface expects. |
@@ -42,7 +42,7 @@ You do not need to read the whole project at once. Start with the README, run th
 | `frontend/src/chat.css` | Chat appearance: charcoal colors, readable text, sidebar, composer, message bubbles and small-screen layout. |
 | `frontend/src/vite-env.d.ts` | Makes Vite's environment types available to TypeScript. |
 | `frontend/public/favicon.svg` | Small VeritasAI icon used by browser tabs. |
-| `frontend/src/App.test.tsx` | Tests navigation, sending questions, saved history, keyboard input and retry drafts with controlled API responses. |
+| `frontend/src/App.test.tsx` | Tests navigation, sending questions, saved history, keyboard input, retry drafts and whether Gemini keys are sent only when needed, with controlled API responses. |
 | `frontend/src/ClaimCard.test.tsx` | Tests citation clicks and safe rendering of model-provided text. |
 | `frontend/vite.config.ts` | Development API proxy and frontend test/build settings. |
 | `frontend/tsconfig.json` | TypeScript compiler rules. |
@@ -60,6 +60,7 @@ TypeScript is JavaScript with descriptions of expected data types. It helps catc
 | `scripts/build.py` | Downloads models, builds React and copies static assets to the Vercel CDN directory. |
 | `scripts/create_samples.py` | Creates the fictional Cedar and Willow PDFs with ReportLab. |
 | `scripts/smoke_live.py` | Checks a deployed site using fresh test workspaces; records results and deletes its own data. |
+| `scripts/check_privacy_live.py` | Runs focused live access, cookie and deletion checks with disposable fictional data; saves a redacted report. |
 | `scripts/evaluate.py` | Runs the actual 24-pair local NLI evaluation and creates figures. |
 | `tests/test_evidence.py` | Tests parsing, offsets, exact quotes, unknown sources and real model decisions. |
 | `tests/test_generation.py` | Tests provider formatting, malformed output, safe errors and bounded retries using controlled HTTP responses. |
@@ -119,6 +120,7 @@ No included sample is a real scientific paper or customer document. Private expe
 | `docs/evidence/` | Raw live API check results, including the first reproduced conflict failure. |
 | `docs/VALIDATION.md` | Which checks actually ran, and which still need to run? |
 | `docs/DEPLOYMENT.md` | Where is the live site, and how can I host this code? |
+| `docs/PRIVACY.md` | Where do documents, questions and keys go, and what can we honestly promise? |
 | `docs/SECURITY.md` | What data protections exist and what are their limits? |
 | `docs/THIRD_PARTY.md` | Which models, packages, services and licenses are used? |
 

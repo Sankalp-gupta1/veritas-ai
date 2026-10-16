@@ -255,7 +255,13 @@ export default function App() {
         model: settings.model,
       });
       const headers: Record<string, string> = {};
-      if (settings.key) headers["X-Gemini-Key"] = settings.key;
+      if (
+        settings.provider === "gemini" &&
+        (compare || queryMode === "ask") &&
+        settings.key
+      ) {
+        headers["X-Gemini-Key"] = settings.key;
+      }
       if (compare) {
         const r = await api<{ results: Answer[] }>("/compare", {
           method: "POST",
@@ -520,8 +526,8 @@ export default function App() {
           <div className="private-workspace">
             <LockKeyhole size={15} />
             <span>
-              Private browser workspace
-              <small>Keep this browser to keep access.</small>
+              Browser-linked workspace
+              <small>Files are stored on the server.</small>
             </span>
           </div>
           <button

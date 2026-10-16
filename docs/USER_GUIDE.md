@@ -2,6 +2,12 @@
 
 **[Open the live website](https://veritas-ai-v8lw.vercel.app/)** and wait for **Workspace ready**. No installation is needed. Source excerpts and claim checks need no AI API key.
 
+## Before uploading
+
+The live app stores PDFs and saved answers on its server. Local search and claim checking run there too; they do not run inside your phone. Gemini answers additionally send your question, selected text and file names to Google. An API key does not make that processing private to your computer.
+
+Read [Where your data goes](PRIVACY.md) for key handling, provider terms and deletion limits. Use the fictional samples or public documents first. Keep your browser cookie to retain access; clearing it does not delete server data.
+
 ## The three panels
 
 **Left: your library.** Add PDFs, choose which sources the app may use, or remove a document. A checkbox means “include this document when answering.” Clicking the file name opens it.

@@ -53,6 +53,21 @@ export function SettingsDialog({
           Local search and evidence checks work without a key. Connect Gemini
           for AI-written answers and RAG comparisons.
         </p>
+        <p className="privacy-note">
+          <ShieldCheck size={16} />
+          <span>
+            PDFs and saved answers are stored on this app's server. This is not
+            end-to-end encrypted.{" "}
+            <a
+              className="text-link"
+              href="https://github.com/Sankalp-gupta1/veritas-ai/blob/main/docs/PRIVACY.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Read how your data is handled
+            </a>
+          </span>
+        </p>
         <label>
           Answer engine
           <select
@@ -105,10 +120,12 @@ export function SettingsDialog({
             <p className="privacy-note">
               <ShieldCheck size={16} />
               <span>
-                Your key stays in this tab's memory. It is sent over HTTPS for
-                your requests and is never saved to our database. Refreshing
-                clears it. Relevant document excerpts go to Google when you ask
-                Gemini. Provider terms and quotas apply.
+                The app keeps the entered key in this tab's memory and does not
+                save it to its database. Gemini generation sends it through our
+                backend to Google over HTTPS. Your question, selected passages
+                and file names go to Google too. Refreshing clears the entered
+                key from app state. Check Google's data-use terms before sending
+                personal information.
               </span>
             </p>
           </>

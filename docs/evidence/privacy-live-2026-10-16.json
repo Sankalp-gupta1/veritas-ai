@@ -1,0 +1,178 @@
+{
+  "started_at": "2026-10-16T06:32:22.373903+00:00",
+  "base_url": "https://veritas-ai-v8lw.vercel.app",
+  "status": "passed",
+  "scope": "Two disposable workspaces and one authored PDF; no existing users or real API keys",
+  "checks": [
+    {
+      "name": "Health endpoint responds",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Database and local models ready",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Anonymous document access denied",
+      "passed": true,
+      "detail": "HTTP 401"
+    },
+    {
+      "name": "Mutation without app header denied",
+      "passed": true,
+      "detail": "HTTP 403"
+    },
+    {
+      "name": "Foreign-origin mutation denied",
+      "passed": true,
+      "detail": "HTTP 403"
+    },
+    {
+      "name": "Private configuration path not served: /.env",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Private configuration path not served: /.git/config",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Owner workspace created",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Owner cookie has Secure, HttpOnly and SameSite=Strict",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Owner response is not cacheable",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Other workspace created",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Other cookie has Secure, HttpOnly and SameSite=Strict",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Other response is not cacheable",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Fictional PDF stored in owner workspace",
+      "passed": true,
+      "detail": "HTTP 201"
+    },
+    {
+      "name": "Owner can read original PDF",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "PDF bytes match upload",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Document responses use no-store",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "PDF response has sandbox policy",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Other workspace cannot read pdf",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Other workspace cannot read pages/1",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Other workspace cannot query selected document",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Local claim check produces a saved result",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Other workspace cannot read saved answer",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Other workspace cannot delete owner's PDF",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Owner deletes test PDF",
+      "passed": true,
+      "detail": "HTTP 204"
+    },
+    {
+      "name": "Deleted PDF is no longer available through API",
+      "passed": true,
+      "detail": "HTTP 404"
+    },
+    {
+      "name": "Owner history can be checked after deletion",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Document deletion clears saved source text from history",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Owner disposable workspace removed",
+      "passed": true,
+      "detail": "HTTP 204"
+    },
+    {
+      "name": "Other disposable workspace removed",
+      "passed": true,
+      "detail": "HTTP 204"
+    }
+  ],
+  "limitations": [
+    "Not a full security audit or proof that a leak is impossible",
+    "No cloud-admin, log-drain, backup-purge or account-permission audit",
+    "No live Gemini request or verification of the API key owner's billing/data-sharing settings"
+  ],
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "models_ready": true,
+    "gemini_configured": false,
+    "ollama_available": false,
+    "limits": {
+      "file_mb": 4,
+      "pages": 80,
+      "documents": 20
+    }
+  },
+  "finished_at": "2026-10-16T06:34:17.238907+00:00",
+  "passed": 30,
+  "total": 30
+}

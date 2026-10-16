@@ -153,7 +153,7 @@ def generate(question, context, provider="gemini", key=None, model=None):
             raise
         except httpx.HTTPError as error:
             raise ProviderError(
-                "The AI provider did not respond. Please retry. Your documents are safe."
+                "The AI provider did not respond. Please retry; the request may already have reached the provider."
             ) from error
         except Exception as error:
             raise ProviderError(

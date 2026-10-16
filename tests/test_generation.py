@@ -30,6 +30,14 @@ def test_valid_json_from_provider_is_structurally_validated(monkeypatch):
     def respond(request):
         assert request.headers["x-goog-api-key"] == "fictional-test-key"
         assert "fictional-test-key" not in str(request.url)
+        body = json.loads(request.content)
+        prompt = json.loads(body["contents"][0]["parts"][0]["text"])
+        assert prompt == {
+            "question": "How many adults?",
+            "evidence": [{"chunk_id": "c1", "source": "fictional.pdf", "text": "120 adults."}],
+        }
+        assert "fictional-test-key" not in request.content.decode()
+        assert "internal-not-for-provider" not in request.content.decode()
         return httpx.Response(
             200,
             json={
@@ -39,7 +47,12 @@ def test_valid_json_from_provider_is_structurally_validated(monkeypatch):
         )
 
     install_transport(monkeypatch, respond)
-    claims, meta = generation.generate("How many adults?", [], key="fictional-test-key")
+    context = [{
+        "id": "c1", "name": "fictional.pdf", "text": "120 adults.",
+        "workspace_id": "internal-not-for-provider", "embedding": [0.1, 0.2],
+    }]
+    claims, meta = generation.generate("How many adults?", context, key="fictional-test-key")
+    assert "fictional-test-key" not in json.dumps({"claims": claims, "meta": meta})
     assert claims == draft["claims"]
     assert meta["usage"]["promptTokenCount"] == 12
 

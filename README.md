@@ -1,8 +1,8 @@
-# VeritasAI
+# VeritasAI — Self-Verifying AI Research Assistant
 
 **[Open the live website →](https://veritas-ai-v8lw.vercel.app/)**
 
-[How to use it](docs/USER_GUIDE.md) · [What each file does](docs/FILE_GUIDE.md) · [Test results](docs/VALIDATION.md) · [Project report](docs/PROJECT_REPORT.md)
+[How to use it](docs/USER_GUIDE.md) · [Where your data goes](docs/PRIVACY.md) · [What each file does](docs/FILE_GUIDE.md) · [Test results](docs/VALIDATION.md) · [Project report](docs/PROJECT_REPORT.md)
 
 ### Ask your PDFs. Check the evidence.
 
@@ -11,6 +11,37 @@ VeritasAI is a research workspace that helps you ask questions about PDFs and ch
 A useful answer should let you ask, **“Where did that come from?”** In VeritasAI, each citation opens the exact PDF page and supporting text. If a claim is unsupported, the app withholds it. If retrieved sources appear to disagree, you can inspect both sides.
 
 **Live status, 16 October 2026:** the React website and FastAPI backend are running on Vercel with a connected PostgreSQL database and local search/checking models. PDF uploads, source excerpts and claim checks work without a paid AI key. The server has **no Gemini key configured**, so AI-written answers require your own key in **AI settings**. This is a working research prototype; it does not guarantee that a source or answer is true.
+
+## Problem statement
+
+AI can produce an answer that sounds convincing even when a document does not support it. A citation can be real while the claim attached to it is wrong. Different reports can also disagree, leaving the reader to check every page manually.
+
+**The goal:** help readers inspect the evidence behind each factual claim, identify uncertainty, and measure whether extra verification improves answers. The application cannot guarantee that an answer or its source is true.
+
+## Our solution
+
+VeritasAI connects document search, optional answer generation and a separate evidence checker:
+
+1. **Read:** upload PDFs and keep the original pages alongside extracted text.
+2. **Find:** retrieve relevant passages and rerank them for the question.
+3. **Draft:** when a generator is connected, request short, individually cited claims.
+4. **Check:** confirm that the quoted words exist and estimate whether they support each claim.
+5. **Show:** present accepted claims with exact sources; withhold unsupported claims and surface possible disagreements.
+6. **Measure:** compare ordinary RAG, reranked RAG and verified RAG using independently reviewed answers.
+
+RAG means *retrieval-augmented generation*: the model receives passages found in your documents before writing its answer. The research question is whether claim-level checking reduces unsupported answers **without hiding too many useful facts**. That improvement has not yet been established on a large independent benchmark.
+
+## Privacy at a glance
+
+**This is not a 100% leak-proof or end-to-end encrypted service.** On the live site, PDFs, extracted text and saved answers are stored in a cloud database. The backend can read them.
+
+| Mode | Where your content is processed |
+|---|---|
+| Source excerpts / Check a claim | On the hosted app server; these paths do not call Gemini. |
+| Gemini answers / Compare methods | The app also sends your question, selected passages and file names to Google. Your own API key still uses an external AI service. |
+| A fully self-hosted setup | You control the app, database and optional local model; privacy depends on your configuration. |
+
+Provider terms depend on your project and region. Read [the data-flow and privacy guide](docs/PRIVACY.md) before uploading sensitive material. Clearing cookies does not delete server records; deleting a PDF also clears all saved answers in its workspace. Active-database deletion cannot promise immediate backup or provider erasure.
 
 ## Try it in two minutes — no installation
 
@@ -27,7 +58,7 @@ The sample PDFs are fictional examples written for testing. They are not real re
 
 | Feature | How it works |
 |---|---|
-| Upload multiple PDFs | Text is extracted page by page and stored in your private browser workspace. |
+| Upload multiple PDFs | Text is extracted page by page and stored on the server in a workspace linked to your browser cookie. |
 | Search your sources | A real embedding model finds related passages. A separate reranker reorders them. |
 | Read source excerpts | Works without any paid API or generative model key. Clearly labelled as excerpts. |
 | Check a claim | Enter a statement. Local models check whether your selected documents support or contradict it. |
@@ -62,9 +93,9 @@ The Docker files are supplied for reproducible deployment. Docker was not availa
 
 Get your own key from [Google AI Studio](https://aistudio.google.com/apikey). In the app, open **AI settings**, choose **Gemini**, and enter the key in the password field.
 
-- The key is kept in this tab's memory. Refreshing clears it.
-- It is sent to the backend for your request and is not stored in the database.
-- Relevant document passages and your question are sent to Google. Do not use confidential documents with a provider whose terms do not suit your needs.
+- The entered key is kept in this tab's application memory. Refreshing clears that state. Do not paste keys into GitHub, screenshots or support messages.
+- It is sent through the backend only for Gemini generation and is not written to the database by the app. Local excerpts and claim checks do not send the entered key.
+- Your question, selected document passages and their file names are sent to Google. See [data use, retention and access limits](docs/PRIVACY.md).
 - The default is `gemini-3.5-flash-lite`. Model access and free quotas depend on your Google account. You can change the model name.
 - For a private installation, the owner can instead set `GEMINI_API_KEY` in the server environment. Do not put it in React code, GitHub or a committed file.
 
@@ -108,7 +139,7 @@ npm run dev --prefix frontend
 
 Open the URL printed by Vite, usually **http://localhost:5173**. The frontend proxies `/api` requests to FastAPI. For a single-process production-style local run, build with `npm run build --prefix frontend` and open **http://localhost:8000**.
 
-## What is inside
+## Architecture and technology
 
 | Part | Technology | Plain-English purpose |
 |---|---|---|
@@ -121,7 +152,7 @@ Open the URL printed by Vite, usually **http://localhost:5173**. The frontend pr
 | Claim checking | DeBERTa NLI, ONNX | Estimates support, contradiction or insufficient evidence |
 | Optional answer writing | Gemini API / local Ollama | Writes atomic claims that must pass the checks |
 | Charts | Recharts and Matplotlib | Displays measured results and exports figures |
-| Deployment | Docker, Vercel configuration, Render blueprint | Portable ways to run the same code |
+| Deployment | Vercel + Neon live; Docker and Render configuration supplied | Hosts the interface, API and persistent database |
 
 ## How an answer is checked
 
@@ -148,12 +179,18 @@ Three things remain separate:
 
 ## Tests and research
 
+The focused privacy review on **16 October 2026** passed **30/30 live API assertions** against two disposable workspaces. It checked access separation, cookie settings, cache behavior and deletion; both workspaces were removed. [Raw results](docs/evidence/privacy-live-2026-10-16.json). This is a regression check, not a full security audit.
+
+The privacy update also passed **10 React tests** and **6 focused Python provider tests** locally. They check that a fictional key is sent only when needed and that the provider request contains the intended question/evidence fields. They do not exercise a real Gemini account.
+
 Release checks on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38832182607): **23 Python tests and 7 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks on 15 October**, followed by a desktop review of the updated chat interface on 16 October. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
 
 ```bash
 python -m pytest tests/test_evidence.py -q
 npm test --prefix frontend
 python scripts/evaluate.py
+# Optional live boundary check; creates and removes its own fictional test data:
+python scripts/check_privacy_live.py --base-url https://veritas-ai-v8lw.vercel.app --out tmp/privacy-check.json
 ```
 
 For full API tests, use a **disposable** PostgreSQL database, apply `scripts/migrate.py`, then set `VERITAS_INTEGRATION_TEST=1` before running `python -m pytest tests -q`. These tests create and delete their own workspaces. Never point the test command at a shared production database.
@@ -173,20 +210,35 @@ See [the experiment protocol](research/PROTOCOL.md) for controlled RAG compariso
 5. [Project report](docs/PROJECT_REPORT.md): implemented work, measured results and remaining work.
 6. [Research-paper draft](research/PAPER_DRAFT.md): honest preliminary manuscript with prior work.
 7. [Deployment](docs/DEPLOYMENT.md): the live site, Vercel setup, and Docker/Render alternatives.
-8. [Privacy and security](docs/SECURITY.md): data boundaries and limits.
+8. [Where your data goes](docs/PRIVACY.md): storage, Gemini, keys, deletion and the limits of this review.
+9. [Security controls](docs/SECURITY.md): implemented protections and work still needed.
+10. [Third-party components](docs/THIRD_PARTY.md): model sources, dependencies and licensing.
 
 ## Limits you should know
 
-- Text-based, mostly English PDFs only. No OCR, image understanding or robust table extraction yet.
+- Text-based, mostly English PDFs only. No OCR, image understanding or robust table extraction yet. The generator can be asked for Hinglish, but the English verifier has not been validated for that language.
 - Maximum 4 MB and 80 pages per PDF; 20 documents and 30 MB per workspace. The installation also has a 200 MB upload allowance.
 - Paragraph detection is heuristic. Complex columns, formulas and layouts can still extract incorrectly.
 - Small English models can miss valid support, misunderstand numbers or misread context. The fixture report includes failures.
 - A browser cookie is your workspace access key. There is no account recovery or cross-device login yet. Export evidence before clearing browser data.
-- Files are kept until explicitly deleted. Deleting a document also removes the workspace's saved answers because they contain source text.
+- Files are kept until explicitly deleted. There is no automatic retention cleanup. Deletion affects the active database; provider requests, backups and exported copies have separate lifetimes.
 - “Compare methods” needs an actual generative model. Source excerpts are not labelled as a generative RAG baseline.
 - Reranker and verifier scores are not calibrated probabilities of correctness.
 - Live Gemini/Ollama, Docker execution, mobile/keyboard accessibility, concurrent load and a large independent benchmark still need separate testing. See the dated validation record for exactly what passed.
 
-## Next research milestone
+## Assumptions and next steps
 
-Build a licensed corpus, freeze development and held-out questions, collect independent human judgments, and test whether verification reduces unsupported claims **without losing too much useful answer coverage**. Publication depends on the evidence and a defensible contribution; it is not guaranteed.
+This prototype assumes users have permission to process their documents, can inspect evidence themselves, and understand that a saved workspace is linked to a browser cookie. Its narrow scope is document research, not general personal advice or autonomous access to external accounts.
+
+| Area | What to build next | Why it matters |
+|---|---|---|
+| Research | Licensed corpus, frozen held-out questions and independent human labels | Measures hallucinations, citation correctness and answer coverage without treating the verifier as ground truth |
+| Privacy | Retention controls, account recovery, restricted database roles and row-level security | Gives users clearer control and adds protection beyond application queries |
+| Reliability | Isolated PDF workers, load tests and backup/restore checks | Handles malformed files, larger workloads and operational failures |
+| Usability | OCR, better table extraction and broader language/accessibility tests | Makes more documents and devices usable |
+
+The existing 24 examples are development diagnostics. Publication depends on experimental evidence and a defensible contribution; it is not guaranteed.
+
+## License and acknowledgements
+
+The project code uses the [MIT license](LICENSE). Upstream model and dependency terms are listed in [third-party components](docs/THIRD_PARTY.md). The sample PDFs were authored for this project. AI coding assistance was used during development and review; test evidence and known limitations are documented rather than replaced by a claim of correctness.

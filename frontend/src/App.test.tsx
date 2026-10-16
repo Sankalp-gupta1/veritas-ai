@@ -102,6 +102,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -194,3 +195,47 @@ it("keeps the draft when a request fails so the user can retry", async () => {
   expect(input).toHaveValue(question);
   expect(screen.getByRole("button", { name: "Ask question" })).toBeEnabled();
 });
+
+it.each(["verify", "extractive", "gemini"])(
+  "only sends the entered key when generation needs Gemini (%s)",
+  async (mode) => {
+    // jsdom has no native dialog implementation; emulate opening it for form interactions.
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.setAttribute("open", "");
+      },
+    });
+    await start();
+    fireEvent.click(screen.getByRole("button", { name: /AI settings/ }));
+    fireEvent.change(screen.getByLabelText("Answer engine"), {
+      target: { value: "gemini" },
+    });
+    fireEvent.change(screen.getByLabelText("Gemini API key"), {
+      target: { value: "fictional-ui-boundary-key" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+    if (mode === "extractive") {
+      fireEvent.click(screen.getByRole("button", { name: /AI settings/ }));
+      fireEvent.change(screen.getByLabelText("Answer engine"), {
+        target: { value: "extractive" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save settings" }));
+    }
+    if (mode === "verify")
+      fireEvent.click(screen.getByRole("button", { name: "Check a claim" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Your research question" }),
+      { target: { value: question } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ask question" }));
+    await screen.findByText("Supported by source");
+    const path = mode === "verify" ? "/verify" : "/ask";
+    const submission = request.mock.calls.find(([url]) => url === path)!;
+    const headers = new Headers(submission[1]?.headers);
+    expect(headers.get("X-Gemini-Key")).toBe(
+      mode === "gemini" ? "fictional-ui-boundary-key" : null,
+    );
+    expect(submission[1]?.body).not.toContain("fictional-ui-boundary-key");
+  },
+);
