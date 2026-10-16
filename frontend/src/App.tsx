@@ -779,6 +779,44 @@ export default function App() {
                         </small>
                       </div>
                     )}
+                    {answer.answer_kind === "generated" && !answer.abstained && (
+                      <section className="guided-answer" aria-label="Structured research explanation">
+                        <div className="guided-eyebrow">EVIDENCE-GROUNDED EXPLANATION</div>
+                        <h2>Answer in simple steps</h2>
+                        <p className="guided-intro">
+                          Here is what your uploaded documents actually support. Each point links to its
+                          evidence below. Claims marked as uncertain or contradicted are not presented
+                          as established facts.
+                        </p>
+                        {answer.claims.filter((c) => c.verdict === "supported" || c.verdict === "conflict").length > 0 ? (
+                          <ol className="guided-steps">
+                            {answer.claims.filter((c) => c.verdict === "supported" || c.verdict === "conflict").map((claim, i) => (
+                              <li key={claim.id}>
+                                <strong>Step {i + 1} — {claim.verdict === "conflict" ? "Finding to review" : "What the document says"}</strong>
+                                <p>{claim.text}</p>
+                                <div className="guided-cites">
+                                  {claim.citations.filter(c => c.document_id).map((c, j) => (
+                                    <button key={j} onClick={() => showEvidence(c)}>
+                                      {c.document_name || "Source"}{c.page_number ? ` · page ${c.page_number}` : ""}
+                                      <ArrowUpRight size={13} />
+                                    </button>
+                                  ))}
+                                </div>
+                                {claim.verdict === "conflict" && <small>Potential disagreement: review both sources before relying on this point.</small>}
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p>The documents do not provide enough verified material for an explanation.</p>
+                        )}
+                        <div className="guided-tip">
+                          <strong>Want a deeper explanation?</strong>
+                          <span>Ask a follow-up such as “Explain step by step in Hinglish with examples” or “Explain the technical workflow in detail.” The next answer will be checked against your selected PDFs again.</span>
+                        </div>
+                        <h3>Claim-by-claim verification</h3>
+                        <p className="guided-intro">Open any source below to inspect the page and exact passage.</p>
+                      </section>
+                    )}
                     {answer.claims.map((claim, index) => (
                       <ClaimCard
                         key={claim.id}
