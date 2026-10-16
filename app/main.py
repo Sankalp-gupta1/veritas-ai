@@ -506,6 +506,17 @@ def sample_pdf(name: str):
 frontend = config.ROOT / "frontend" / "dist"
 
 
+@app.get("/api/static/{asset_path:path}", include_in_schema=False)
+def bundled_asset(asset_path: str):
+    """Serve built Vite assets via the Vercel FastAPI function."""
+    assets_root = (frontend / "assets").resolve()
+    target = (assets_root / asset_path).resolve()
+    if not target.is_relative_to(assets_root) or not target.is_file():
+        raise HTTPException(404, "Asset not found.")
+    return FileResponse(target, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
+
 @app.get("/", include_in_schema=False)
 @app.get("/index.html", include_in_schema=False)
 def frontend_shell():
