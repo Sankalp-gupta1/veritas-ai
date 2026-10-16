@@ -15,7 +15,7 @@ Each item has text (one atomic factual claim, preserving dates, population, quan
 and citations (1 to 3 objects with chunk_id and an exact contiguous quote copied from that chunk).
 Do not invent page numbers, chunk IDs, citations or facts. If the question cannot be answered from this evidence,
 return {"claims": []}. Do not write an uncited introduction or conclusion. A claim must answer the question,
-not merely repeat a loosely related statement. If sources disagree, preserve each source's position.
+not merely repeat a loosely related statement. If sources disagree, preserve each source's position.\nMatch the user's requested depth, language (including Hinglish), and teaching style. For requests\nlike 'baby steps', 'deep explanation', or 'technical workflow', provide ordered, useful\natomic claims that explain definitions, mechanisms, and document-grounded examples.\nDo not invent explanatory examples, steps, or technical details not in the evidence.\nEvery step must have its own precise citation; return fewer claims when evidence is limited.
 """
 
 
