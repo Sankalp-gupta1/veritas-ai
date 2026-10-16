@@ -183,7 +183,7 @@ The focused privacy review on **16 October 2026** passed **30/30 live API assert
 
 The privacy update also passed **10 React tests** and **6 focused Python provider tests** locally. They check that a fictional key is sent only when needed and that the provider request contains the intended question/evidence fields. They do not exercise a real Gemini account.
 
-Release checks on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38832182607): **23 Python tests and 7 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks on 15 October**, followed by a desktop review of the updated chat interface on 16 October. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
+Release checks for this privacy update on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38863177373): **23 Python tests and 10 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks on 15 October**, followed by a desktop review of the updated chat interface on 16 October. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
 
 ```bash
 python -m pytest tests/test_evidence.py -q

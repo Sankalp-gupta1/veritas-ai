@@ -24,7 +24,9 @@ Reviewed the data flow at application commit `bea266a8426b7af9e5f82d29fac5869f76
 
 The interface previously attached an entered Gemini key to local requests as well as Gemini requests. The update sends it only for Gemini generation, reducing unnecessary transfer to the backend. It also explains server storage in the sidebar/settings and removes an unsupported “documents are safe” assurance from provider network errors.
 
-Local validation after this change: **10 React tests passed**, including three key-handling cases; **6 provider tests passed**, including exact outbound payload checks with a fictional key. These controlled tests do not establish Google's internal data handling. The historical full-suite runs below retain their original counts and dates.
+Local validation after this change: **10 React tests passed**, including three key-handling cases; **6 provider tests passed**, including exact outbound payload checks with a fictional key. These controlled tests do not establish Google's internal data handling. After publication, [GitHub CI run 38863177373](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38863177373) for commit `f42766a3830a533f4af9c0d556897d67c2c636d8` passed **23 Python tests in 6.12 seconds, 10 React tests and the production build**, using native PostgreSQL/pgvector. The historical runs below retain their original counts and dates.
+
+Vercel reported a successful deployment for this commit. A desktop browser confirmed the live sidebar storage label and the settings notices for server storage, lack of end-to-end encryption, and Gemini transfers. The key field stayed empty. [Screenshot of the live settings](evidence/privacy-settings-2026-10-16.jpg).
 
 Reproduce the live check with a fresh report path:
 
