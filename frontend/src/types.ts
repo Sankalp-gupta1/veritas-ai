@@ -30,6 +30,7 @@ export type Claim = {
   counter_evidence: Citation[];
 };
 export type Answer = {
+  privacy?: { history_saved: boolean; external_ai: boolean; storage: string; processing: string };
   id: string;
   question: string;
   variant: string;
@@ -61,4 +62,22 @@ export type Settings = {
   provider: "extractive" | "gemini" | "ollama";
   model: string;
   key: string;
+};
+
+export type Account = {
+  id: string;
+  email: string;
+  email_verified: boolean;
+  workspace_id: string;
+  cloud_enabled: boolean;
+  save_history: boolean;
+  idle_timeout_minutes: number;
+};
+export type Disclosure = {
+  consent_token: string;
+  recipient: string;
+  expires_in_seconds: number;
+  notice: string;
+  masked: Record<string, number>;
+  payloads: { method: string; question: string; evidence: { chunk_id: string; source: string; text: string }[] }[];
 };

@@ -16,6 +16,7 @@ from .db import connection
 from .generation import SYSTEM, generate
 from .ml import embed, rerank
 from .verification import check_claims, claim_check_draft, extractive_claims
+from . import vault
 
 
 def retrieve(workspace_id, question, document_ids):
@@ -23,13 +24,17 @@ def retrieve(workspace_id, question, document_ids):
     with connection() as db:
         records = db.execute(
             """SELECT c.id,c.document_id,c.page_number,c.start_offset,c.end_offset,c.text,
-                      d.name,d.sha256,p.printed_label,1-(c.embedding <=> %s) AS similarity
+                      d.name,d.sha256,d.encrypted,p.printed_label,1-(c.embedding <=> %s) AS similarity
                FROM chunks c JOIN documents d ON d.id=c.document_id
                JOIN pages p ON p.document_id=c.document_id AND p.page_number=c.page_number
                WHERE d.workspace_id=%s AND d.id=ANY(%s::uuid[])
                ORDER BY c.embedding <=> %s LIMIT 20""",
             (vector, workspace_id, document_ids, vector),
         ).fetchall()
+    for row in records:
+        if row.pop("encrypted"):
+            row["text"] = vault.unseal_text(row["text"], f"{workspace_id}:chunk:{row['id']}")
+            row["name"] = vault.unseal_text(row["name"], f"{workspace_id}:document:{row['document_id']}:name")
     return [dict(r, id=str(r["id"]), document_id=str(r["document_id"])) for r in records]
 
 
@@ -43,6 +48,7 @@ def run_pipeline(
     model=None,
     candidates=None,
     cached_draft=None,
+    disclosure=None,
 ):
     started = perf_counter()
     timings = {}
@@ -52,7 +58,7 @@ def run_pipeline(
     )
     timings["retrieval_ms"] = round((perf_counter() - stage) * 1000, 2)
     stage = perf_counter()
-    ranked = candidates if variant == "rag" else rerank(question, candidates)
+    ranked = disclosure["contexts"][variant] if disclosure else (candidates if variant == "rag" else rerank(question, candidates))
     context = ranked[:5]
     timings["rerank_ms"] = round((perf_counter() - stage) * 1000, 2)
     # Uncalibrated relevance scores are a conservative operational gate, not answer accuracy.
@@ -76,7 +82,16 @@ def run_pipeline(
             {"provider": "extractive", "model": "source excerpts", "usage": {}},
         )
     else:
-        draft, generation = generate(question, context, provider, key, model)
+        if provider == "gemini":
+            if not disclosure:
+                from .generation import ProviderError
+                raise ProviderError("External AI requires a reviewed disclosure preview.")
+            from .privacy import restore_draft
+            draft, generation = generate(disclosure["question"], disclosure["outgoing"][variant], provider, key, model)
+            draft = restore_draft(draft, disclosure["restore"])
+            generation["privacy"] = {"filenames_shared": False, "masked_identifiers": sum(disclosure["masked"].values()), "disclosure_reviewed": True}
+        else:
+            draft, generation = generate(question, context, provider, key, model)
     timings["generation_ms"] = round((perf_counter() - stage) * 1000, 2)
     stage = perf_counter()
     claims = check_claims(draft, context, verify=variant == "verified")

@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,6 +16,17 @@ pytestmark = pytest.mark.skipif(
 )
 ROOT = Path(__file__).resolve().parents[1]
 HEADERS = {"X-Veritas-Request": "1"}
+PASSWORD = "a unique fixture passphrase 2026!"
+
+
+def register(client):
+    return client.post("/api/auth/register", json={"email": f"{uuid4().hex}@example.com", "password": PASSWORD, "confirm_password": PASSWORD})
+
+
+def preview(client, body, operation="ask"):
+    response = client.post(f"/api/privacy/preview?operation={operation}", json=body)
+    assert response.status_code == 200, response.text
+    return {**body, "consent_token": response.json()["consent_token"]}
 
 
 @pytest.fixture
@@ -23,11 +35,13 @@ def clients():
         TestClient(app, headers=HEADERS) as alice,
         TestClient(app, headers=HEADERS) as bob,
     ):
-        assert alice.post("/api/workspace").status_code == 200
-        assert bob.post("/api/workspace").status_code == 200
+        assert register(alice).status_code == 201
+        assert register(bob).status_code == 201
+        for client in (alice, bob):
+            assert client.put("/api/privacy/preferences", json={"cloud_enabled": True, "save_history": True}).status_code == 200
         yield alice, bob
-        assert alice.delete("/api/workspace").status_code == 204
-        assert bob.delete("/api/workspace").status_code == 204
+        for client in (alice, bob):
+            assert client.request("DELETE", "/api/auth/account", json={"password": PASSWORD}).status_code == 204
 
 
 def upload(client, name="cedar-trial-report.pdf"):
@@ -103,11 +117,11 @@ def test_csrf_bad_upload_unknown_ids_and_missing_key(clients):
     did = upload(alice).json()["id"]
     result = alice.post(
         "/api/ask",
-        json={
+        json=preview(alice, {
             "question": "How many adults were enrolled in the Cedar trial?",
             "document_ids": [did],
             "provider": "gemini",
-        },
+        }),
     )
     assert result.status_code == 422
     assert "API key" in result.json()["detail"]
@@ -162,11 +176,11 @@ def test_comparison_reuses_draft_and_withholds_invented_citation(clients, monkey
     monkeypatch.setattr(pipeline, "generate", controlled_generator)
     response = alice.post(
         "/api/compare",
-        json={
+        json=preview(alice, {
             "question": "How many adults were enrolled in the Cedar trial?",
             "document_ids": [did],
             "provider": "gemini",
-        },
+        }, "compare"),
     )
     assert response.status_code == 200, response.text
     baseline, reranked, verified = response.json()["results"]

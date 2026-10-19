@@ -25,15 +25,20 @@ import {
   PanelLeftOpen,
   SquarePen,
   LockKeyhole,
+  LogOut,
+  CloudOff,
+  Eye,
 } from "lucide-react";
 import { api, exportJson } from "./api";
 import { ClaimCard } from "./ClaimCard";
 import { EvidencePanel } from "./EvidencePanel";
 import { SettingsDialog } from "./SettingsDialog";
+import { PrivacyCenter } from "./PrivacyCenter";
+import { DisclosureDialog } from "./DisclosureDialog";
 const Research = lazy(() =>
   import("./Research").then((module) => ({ default: module.Research })),
 );
-import type { Answer, Citation, DocumentRecord, Run, Settings } from "./types";
+import type { Account, Answer, Citation, Disclosure, DocumentRecord, Run, Settings } from "./types";
 
 const questions = [
   "What are the main findings and their limitations?",
@@ -46,7 +51,8 @@ type Health = {
   ollama_available: boolean;
 };
 
-export default function App() {
+type Query = { question: string; document_ids: string[]; variant: string; provider: Settings["provider"]; model: string; temporary: boolean };
+export default function App({ account, onAccount, onSignedOut }: { account: Account; onAccount: (a: Account) => void; onSignedOut: () => void }) {
   const [view, setView] = useState<"workspace" | "research" | "history">(
     "workspace",
   );
@@ -68,6 +74,9 @@ export default function App() {
     key: "",
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [temporary, setTemporary] = useState(false);
+  const [pending, setPending] = useState<{ disclosure: Disclosure; query: Query; compare: boolean } | null>(null);
   const [activeDoc, setActiveDoc] = useState<string | null>(null);
   const [citation, setCitation] = useState<Citation | null>(null);
   const [sidebar, setSidebar] = useState(false);
@@ -82,6 +91,13 @@ export default function App() {
   const [drag, setDrag] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const textInput = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!account.cloud_enabled) {
+      setSettings(s => ({ ...s, provider: "extractive", key: "" }));
+      setPending(null);
+    }
+  }, [account.cloud_enabled]);
 
   useEffect(() => {
     const screen = window.matchMedia("(max-width: 700px)");
@@ -153,8 +169,6 @@ export default function App() {
       const d = await loadData();
       setSelected(d.map((x) => x.id));
       setReady(true);
-      if (h.gemini_configured)
-        setSettings((s) => ({ ...s, provider: "gemini" }));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -230,12 +244,16 @@ export default function App() {
       setError((e as Error).message);
     }
   }
-  async function ask(compare = false) {
+  async function ask(compare = false, approved?: { query: Query; token: string }) {
     const submittedQuestion =
-      question.trim() || (compare ? answer?.question : "");
+      approved?.query.question || question.trim() || (compare ? answer?.question : "");
     if (!submittedQuestion || !selected.length || busy || !ready) return;
     if (compare && settings.provider === "extractive") {
       setShowSettings(true);
+      return;
+    }
+    if (settings.provider === "gemini" && (compare || queryMode === "ask") && !account.cloud_enabled) {
+      setShowPrivacy(true);
       return;
     }
     setBusy(
@@ -247,13 +265,21 @@ export default function App() {
     setNotice("");
     setComparison([]);
     try {
-      const body = JSON.stringify({
+      const query: Query = approved?.query || {
         question: submittedQuestion,
         document_ids: selected,
         variant: "verified",
         provider: settings.provider,
         model: settings.model,
-      });
+        temporary,
+      };
+      if (query.provider === "gemini" && (compare || queryMode === "ask") && !approved) {
+        setBusy("Preparing your private disclosure preview…");
+        const disclosure = await api<Disclosure>(`/privacy/preview?operation=${compare ? "compare" : "ask"}`, { method: "POST", body: JSON.stringify(query) });
+        setPending({ disclosure, query, compare });
+        return;
+      }
+      const body = JSON.stringify({ ...query, ...(approved ? { consent_token: approved.token } : {}) });
       const headers: Record<string, string> = {};
       if (
         settings.provider === "gemini" &&
@@ -345,6 +371,17 @@ export default function App() {
   const checked =
     answer?.claims.filter((c) => c.verdict !== "not_checked").length || 0;
 
+  async function dataChanged() {
+    setAnswer(null); setComparison([]); setActiveDoc(null); setCitation(null); setPending(null);
+    const remaining = await loadData();
+    setSelected(s => s.filter(id => remaining.some(d => d.id === id)));
+  }
+
+  async function signOut() {
+    try { await api("/auth/logout", { method: "POST" }); onSignedOut(); }
+    catch (e) { setError((e as Error).message); }
+  }
+
   return (
     <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside
@@ -415,6 +452,7 @@ export default function App() {
             <History size={18} /> Answer history{" "}
             <span className="nav-count">{runs.length}</span>
           </button>
+          <button onClick={() => { setSidebar(false); setShowPrivacy(true); }}><ShieldCheck size={18} /> Privacy center <span className="nav-pill">CONTROL</span></button>
         </nav>
         <div className="sidebar-scroll">
           {runs.length > 0 && (
@@ -526,8 +564,8 @@ export default function App() {
           <div className="private-workspace">
             <LockKeyhole size={15} />
             <span>
-              Browser-linked workspace
-              <small>Files are stored on the server.</small>
+              Account protected
+              <small>Encrypted content on the server.</small>
             </span>
           </div>
           <button
@@ -550,6 +588,7 @@ export default function App() {
             </span>
             <Settings2 size={17} />
           </button>
+          <div className="account-footer"><span title={account.email}>{account.email}</span><button className="icon-button" aria-label="Sign out and lock workspace" title="Sign out and lock workspace" onClick={() => void signOut()}><LogOut size={17} /></button></div>
         </div>
       </aside>
       <input
@@ -592,6 +631,7 @@ export default function App() {
             </strong>
           </div>
           <div className="topbar-right">
+            <button className={`privacy-status-pill ${account.cloud_enabled ? "external-available" : ""}`} onClick={() => setShowPrivacy(true)}>{account.cloud_enabled ? <Eye size={14} /> : <CloudOff size={14} />}<span>{account.cloud_enabled ? "Review before sharing" : "External AI blocked"}</span></button>
             <span className={`connection-status ${ready ? "online" : ""}`}>
               <i />
               {ready ? "Workspace ready" : "Connecting"}
@@ -703,6 +743,7 @@ export default function App() {
                         ? "Ask your documents. Follow every claim to its source."
                         : "Upload a PDF to ask questions and check the evidence."}
                     </p>
+                    <div className="welcome-privacy"><ShieldCheck size={15} /><span>Your PDFs are encrypted on the server. {account.save_history ? "Answer history is enabled." : "Answer history starts off."} <button onClick={() => setShowPrivacy(true)}>Your privacy controls</button></span></div>
                     {documents.length === 0 && (
                       <div className="welcome-actions">
                         <button
@@ -775,6 +816,7 @@ export default function App() {
                         <Download size={14} /> Export evidence
                       </button>
                     </div>
+                    {answer.privacy && <div className="answer-privacy-receipt"><ShieldCheck size={15} /><span>{answer.privacy.external_ai ? "Reviewed text sent to Gemini" : "No external AI used"} · {answer.privacy.history_saved ? "Saved with encryption" : "Not saved to history"}</span><button onClick={() => setShowPrivacy(true)}>Details</button></div>}
                     {answer.abstained && (
                       <div className="abstention">
                         <ShieldCheck size={24} />
@@ -998,7 +1040,7 @@ export default function App() {
                   </div>
                 </form>
                 <div className="composer-footnote">
-                  <span>Each question searches your selected PDFs.</span>
+                  <button className="history-mode-button" disabled={!!busy} onClick={() => account.save_history ? setTemporary(!temporary) : setShowPrivacy(true)} title={account.save_history ? "Toggle temporary answer mode" : "Answer history is off in Privacy center"}><LockKeyhole size={12} />{!account.save_history || temporary ? "This answer won't be saved" : "Save this answer to history"}</button>
                   <button
                     disabled={
                       !ready ||
@@ -1049,6 +1091,8 @@ export default function App() {
           value={settings}
           serverKey={health?.gemini_configured || false}
           ollama={health?.ollama_available || false}
+          cloudEnabled={account.cloud_enabled}
+          onPrivacy={() => { setShowSettings(false); setShowPrivacy(true); }}
           onClose={() => setShowSettings(false)}
           onSave={(s) => {
             setSettings(s);
@@ -1061,6 +1105,8 @@ export default function App() {
           }}
         />
       )}
+      {showPrivacy && <PrivacyCenter account={account} onClose={() => setShowPrivacy(false)} onAccount={onAccount} onSignedOut={onSignedOut} onDataChanged={dataChanged} />}
+      {pending && <DisclosureDialog value={pending.disclosure} onCancel={() => { setPending(null); setNotice("Cancelled. Nothing from this request was sent to Gemini."); }} onApprove={() => { const p = pending; setPending(null); void ask(p.compare, { query: p.query, token: p.disclosure.consent_token }); }} />}
     </div>
   );
 }

@@ -12,6 +12,8 @@ export async function api<T>(
     credentials: "same-origin",
   });
   if (!response.ok) {
+    if (response.status === 401 && !url.startsWith("/auth/"))
+      window.dispatchEvent(new Event("veritas-session-ended"));
     const body = await response
       .json()
       .catch(() => ({ detail: "The server could not complete this request." }));

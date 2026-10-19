@@ -1,27 +1,27 @@
 """HTTP boundaries: private workspaces, bounded uploads, real persistence and errors."""
 
-import hashlib
 import json
 import logging
 import os
-import secrets
-import time
 from pathlib import Path
 from typing import Literal
 from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, Field, field_validator
 
-from . import config
+from . import config, privacy, vault
+from .auth import router as auth_router, workspace
 from .db import connection
 from .documents import chunk_pages, extract_pdf, sha256
 from .generation import ProviderError
 from .ml import embed
 from .pipeline import retrieve, run_claim_check, run_pipeline
+from .security import audit, rate_limit
 
 logger = logging.getLogger("veritas")
 app = FastAPI(
@@ -30,12 +30,23 @@ app = FastAPI(
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
 )
-COOKIE = "veritas_workspace"
+app.include_router(auth_router)
+app.include_router(privacy.router)
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request(request, exc):
+    # Pydantic errors can echo raw input, including passwords and private text.
+    return JSONResponse({"detail": "Please check the fields and try again."}, status_code=422)
 
 
 @app.middleware("http")
 async def boundaries(request: Request, call_next):
     request_id = str(uuid4())
+    if request.url.path.startswith("/api/") and request.url.path != "/api/documents":
+        length = request.headers.get("content-length", "0")
+        if not length.isdigit() or int(length) > 64_000:
+            return JSONResponse({"detail": "This request is too large."}, status_code=413)
     if request.url.path == "/api/documents" and request.method == "POST":
         length = request.headers.get("content-length", "0")
         if not length.isdigit() or int(length) > config.MAX_FILE_BYTES + 100_000:
@@ -72,40 +83,21 @@ async def boundaries(request: Request, call_next):
         )
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Referrer-Policy"] = "same-origin"
-    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN" if request.url.path.endswith("/pdf") else "DENY"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if "Content-Security-Policy" not in response.headers:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; "
+            "frame-src 'self' blob:; object-src 'none'; base-uri 'none'; "
+            "form-action 'self'; frame-ancestors 'none'"
+        )
+    if config.PRODUCTION:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
     if request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "private, no-store"
     return response
-
-
-def rate_limit(bucket, maximum=30, seconds=3600):
-    window = int(time.time()) // seconds
-    with connection() as db:
-        count = db.execute(
-            """INSERT INTO rate_limits(bucket,window_id,count) VALUES(%s,%s,1)
-                ON CONFLICT(bucket,window_id) DO UPDATE SET count=rate_limits.count+1 RETURNING count""",
-            (bucket, window),
-        ).fetchone()["count"]
-    if count > maximum:
-        raise HTTPException(
-            429,
-            "Too many requests. Please wait before trying again.",
-            headers={"Retry-After": str(seconds)},
-        )
-
-
-def workspace(request: Request):
-    token = request.cookies.get(COOKIE, "")
-    if len(token) != 64:
-        raise HTTPException(401, "Open a workspace before continuing.")
-    digest = hashlib.sha256(token.encode()).hexdigest()
-    with connection() as db:
-        found = db.execute("SELECT id FROM workspaces WHERE token_hash=%s", (digest,)).fetchone()
-    if not found:
-        raise HTTPException(401, "This workspace has expired. Open a new workspace.")
-    return str(found["id"])
 
 
 @app.get("/api/health")
@@ -122,9 +114,11 @@ def health():
             ]
         )
         return {
-            "status": "ok" if present else "models_missing",
+            "status": "ok" if present and vault.configured() else "configuration_required",
             "database": "connected",
             "models_ready": present,
+            "vault_ready": vault.configured(),
+            "accounts_required": True,
             "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
             "ollama_available": bool(os.getenv("OLLAMA_URL")) and not config.PRODUCTION,
             "limits": {"file_mb": 4, "pages": 80, "documents": 20},
@@ -141,41 +135,25 @@ def health():
 
 
 @app.post("/api/workspace")
-def create_workspace(request: Request, response: Response):
-    if request.cookies.get(COOKIE):
-        try:
-            return {"id": workspace(request)}
-        except HTTPException:
-            pass
-    # A global ceiling also bounds workspace creation when IP identity is unavailable.
-    rate_limit("new_workspaces", 80)
-    token = secrets.token_hex(32)
-    identity = str(uuid4())
-    with connection() as db:
-        db.execute(
-            "INSERT INTO workspaces(id,token_hash) VALUES(%s,%s)",
-            (identity, hashlib.sha256(token.encode()).hexdigest()),
-        )
-    response.set_cookie(
-        COOKIE,
-        token,
-        httponly=True,
-        secure=config.PRODUCTION,
-        samesite="strict",
-        max_age=60 * 60 * 24 * 90,
-        path="/",
-    )
-    return {"id": identity}
+def create_workspace(wid=Depends(workspace)):
+    return {"id": wid}
+
+
+def document_metadata(row, wid):
+    row = dict(row)
+    if row.pop("encrypted", False):
+        row["name"] = vault.unseal_text(row["name"], f"{wid}:document:{row['id']}:name")
+    return row
 
 
 @app.get("/api/documents")
 def list_documents(wid=Depends(workspace)):
     with connection() as db:
         rows = db.execute(
-            "SELECT id,name,sha256,page_count,byte_count,created_at FROM documents WHERE workspace_id=%s ORDER BY created_at DESC",
+            "SELECT id,name,sha256,page_count,byte_count,created_at,encrypted FROM documents WHERE workspace_id=%s ORDER BY created_at DESC",
             (wid,),
         ).fetchall()
-    return {"documents": rows}
+    return {"documents": [document_metadata(row, wid) for row in rows]}
 
 
 @app.post("/api/documents", status_code=201)
@@ -236,13 +214,13 @@ def upload_document(file: UploadFile = File(...), wid=Depends(workspace)):
         if exists:
             return {"id": str(exists["id"]), "duplicate": True}
         db.execute(
-            "INSERT INTO documents(id,workspace_id,name,sha256,page_count,byte_count,pdf) VALUES(%s,%s,%s,%s,%s,%s,%s)",
-            (did, wid, name, digest, len(pages), len(data), data),
+            "INSERT INTO documents(id,workspace_id,name,sha256,page_count,byte_count,pdf,encrypted) VALUES(%s,%s,%s,%s,%s,%s,%s,true)",
+            (did, wid, vault.seal_text(name, f"{wid}:document:{did}:name"), digest, len(pages), len(data), vault.seal(data, f"{wid}:document:{did}:pdf")),
         )
         for page in pages:
             db.execute(
                 "INSERT INTO pages(document_id,page_number,printed_label,text) VALUES(%s,%s,%s,%s)",
-                (did, page["page_number"], page["printed_label"], page["text"]),
+                (did, page["page_number"], page["printed_label"], vault.seal_text(page["text"], f"{wid}:page:{did}:{page['page_number']}")),
             )
         with db.cursor() as cursor:
             cursor.executemany(
@@ -254,13 +232,14 @@ def upload_document(file: UploadFile = File(...), wid=Depends(workspace)):
                         c["page_number"],
                         c["start_offset"],
                         c["end_offset"],
-                        c["text"],
+                        vault.seal_text(c["text"], f"{wid}:chunk:{c['id']}"),
                         vector,
                         config.EMBEDDING_MODEL,
                     )
                     for c, vector in zip(chunks, vectors)
                 ],
             )
+        audit(db, wid, "document_encrypted_and_saved")
     return {
         "id": did,
         "name": name,
@@ -274,7 +253,7 @@ def upload_document(file: UploadFile = File(...), wid=Depends(workspace)):
 
 def owned_document(db, wid, did):
     document = db.execute(
-        "SELECT id,name,sha256,page_count FROM documents WHERE id=%s AND workspace_id=%s",
+        "SELECT id,name,sha256,page_count,encrypted FROM documents WHERE id=%s AND workspace_id=%s",
         (did, wid),
     ).fetchone()
     if not document:
@@ -286,9 +265,10 @@ def owned_document(db, wid, did):
 def get_pdf(did: UUID, wid=Depends(workspace)):
     with connection() as db:
         owned_document(db, wid, did)
-        data = db.execute(
-            "SELECT pdf FROM documents WHERE id=%s AND workspace_id=%s", (did, wid)
-        ).fetchone()["pdf"]
+        row = db.execute(
+            "SELECT pdf,encrypted FROM documents WHERE id=%s AND workspace_id=%s", (did, wid)
+        ).fetchone()
+    data = vault.unseal(row["pdf"], f"{wid}:document:{did}:pdf") if row["encrypted"] else bytes(row["pdf"])
     return Response(
         bytes(data),
         media_type="application/pdf",
@@ -309,7 +289,9 @@ def get_page(did: UUID, page_number: int, wid=Depends(workspace)):
         ).fetchone()
     if not page:
         raise HTTPException(404, "Page not found.")
-    return {**page, "document": document}
+    if document["encrypted"]:
+        page["text"] = vault.unseal_text(page["text"], f"{wid}:page:{did}:{page_number}")
+    return {**page, "document": document_metadata(document, wid)}
 
 
 @app.delete("/api/documents/{did}", status_code=204)
@@ -320,16 +302,20 @@ def delete_document(did: UUID, wid=Depends(workspace)):
         db.execute("DELETE FROM documents WHERE id=%s AND workspace_id=%s", (did, wid))
         # Saved evidence contains text too. Remove all workspace runs so deletion is complete.
         db.execute("DELETE FROM runs WHERE workspace_id=%s", (wid,))
+        db.execute("DELETE FROM disclosure_consents WHERE workspace_id=%s", (wid,))
+        audit(db, wid, "document_and_saved_answers_deleted")
     return Response(status_code=204)
 
 
 @app.delete("/api/workspace", status_code=204)
-def delete_workspace(response: Response, wid=Depends(workspace)):
+def delete_workspace(wid=Depends(workspace)):
     with connection() as db:
-        db.execute("DELETE FROM workspaces WHERE id=%s", (wid,))
-    response.delete_cookie(COOKIE, path="/")
-    response.status_code = 204
-    return response
+        db.execute("SELECT id FROM workspaces WHERE id=%s FOR UPDATE", (wid,))
+        db.execute("DELETE FROM documents WHERE workspace_id=%s", (wid,))
+        db.execute("DELETE FROM runs WHERE workspace_id=%s", (wid,))
+        db.execute("DELETE FROM disclosure_consents WHERE workspace_id=%s", (wid,))
+        audit(db, wid, "workspace_data_deleted")
+    return Response(status_code=204)
 
 
 class Question(BaseModel):
@@ -338,6 +324,8 @@ class Question(BaseModel):
     variant: Literal["rag", "rerank", "verified"] = "verified"
     provider: Literal["extractive", "gemini", "ollama"] = "extractive"
     model: str | None = Field(default=None, max_length=90)
+    consent_token: str | None = Field(default=None, max_length=100)
+    temporary: bool = False
 
     @field_validator("question")
     @classmethod
@@ -358,9 +346,10 @@ def validate_selection(wid, ids):
         raise HTTPException(404, "A selected document is unavailable in your workspace.")
 
 
-def save_run(wid, result):
+def save_run(wid, result, temporary=False):
     with connection() as db:
-        if not db.execute("SELECT id FROM workspaces WHERE id=%s FOR UPDATE", (wid,)).fetchone():
+        pref = db.execute("SELECT id,save_history FROM workspaces WHERE id=%s FOR UPDATE", (wid,)).fetchone()
+        if not pref:
             raise HTTPException(
                 410, "This workspace was removed while the answer was being checked."
             )
@@ -375,10 +364,44 @@ def save_run(wid, result):
                     409,
                     "A source was removed while this answer was being checked. Please ask again.",
                 )
+        saved = bool(pref["save_history"] and not temporary)
+        result["privacy"] = {
+            "history_saved": saved,
+            "external_ai": result["generation"]["provider"] == "gemini" and result["generation"]["model"] != "not called",
+            "storage": "Encrypted on the server" if saved else "Answer not saved to history",
+            "processing": "The app server processes your documents. This is not end-to-end encryption.",
+        }
+        if not saved:
+            return
+        sealed = vault.seal_text(json.dumps(result, default=str), f"{wid}:run:{result['id']}:result")
+        metadata = {"sealed": sealed, "counts": result["counts"], "latency_ms": result["latency_ms"], "abstained": result["abstained"]}
         db.execute(
-            "INSERT INTO runs(id,workspace_id,question,variant,result) VALUES(%s,%s,%s,%s,%s)",
-            (result["id"], wid, result["question"], result["variant"], Jsonb(result)),
+            "INSERT INTO runs(id,workspace_id,question,variant,result,encrypted) VALUES(%s,%s,%s,%s,%s,true)",
+            (result["id"], wid, vault.seal_text(result["question"], f"{wid}:run:{result['id']}:question"), result["variant"], Jsonb(metadata)),
         )
+
+
+def cloud_preparation(body, wid, operation, consume=False):
+    pref = privacy.require_cloud(wid)
+    ids = [str(x) for x in body.document_ids]
+    validate_selection(wid, ids)
+    candidates = retrieve(wid, body.question, ids)
+    prepared = privacy.prepare_disclosure(body.question, candidates, operation, body.variant)
+    digest = privacy.disclosure_digest(body, operation, prepared, pref)
+    if consume:
+        privacy.consume_consent(wid, body.consent_token, digest)
+    return candidates, prepared, digest
+
+
+@app.post("/api/privacy/preview")
+def disclosure_preview(body: Question, operation: Literal["ask", "compare"] = "ask", wid=Depends(workspace)):
+    if body.provider != "gemini":
+        raise HTTPException(422, "Only Gemini requests need an external-AI disclosure preview.")
+    rate_limit(wid + ":preview", 40)
+    _, prepared, digest = cloud_preparation(body, wid, operation)
+    return {"consent_token": privacy.issue_consent(wid, digest), "expires_in_seconds": 600,
+            "recipient": "Google Gemini", "payloads": prepared["payloads"], "masked": prepared["masked"],
+            "notice": "Only the question and passages below are sent, together with the app's fixed research instructions and response schema. File names are replaced. Review carefully: automatic masking can miss private details. Provider retries may send this same approved text more than once."}
 
 
 @app.post("/api/ask")
@@ -387,6 +410,9 @@ def ask(body: Question, request: Request, wid=Depends(workspace)):
     rate_limit("all_questions", 200)
     ids = [str(x) for x in body.document_ids]
     validate_selection(wid, ids)
+    candidates, prepared = None, None
+    if body.provider == "gemini":
+        candidates, prepared, _ = cloud_preparation(body, wid, "ask", consume=True)
     try:
         result, _ = run_pipeline(
             wid,
@@ -396,10 +422,12 @@ def ask(body: Question, request: Request, wid=Depends(workspace)):
             body.provider,
             request.headers.get("x-gemini-key"),
             body.model,
+            candidates=candidates,
+            disclosure=prepared,
         )
     except ProviderError as error:
         raise HTTPException(422, str(error)) from error
-    save_run(wid, result)
+    save_run(wid, result, body.temporary)
     return result
 
 
@@ -414,7 +442,11 @@ def compare(body: Question, request: Request, wid=Depends(workspace)):
     rate_limit("all_comparisons", 30)
     ids = [str(x) for x in body.document_ids]
     validate_selection(wid, ids)
-    candidates = retrieve(wid, body.question, ids)
+    prepared = None
+    if body.provider == "gemini":
+        candidates, prepared, _ = cloud_preparation(body, wid, "compare", consume=True)
+    else:
+        candidates = retrieve(wid, body.question, ids)
     results, cached = [], None
     try:
         for variant in ["rag", "rerank", "verified"]:
@@ -428,6 +460,7 @@ def compare(body: Question, request: Request, wid=Depends(workspace)):
                 body.model,
                 candidates,
                 cached_draft=cached if variant == "verified" else None,
+                disclosure=prepared,
             )
             if variant == "rerank":
                 cached = draft
@@ -435,7 +468,7 @@ def compare(body: Question, request: Request, wid=Depends(workspace)):
     except ProviderError as error:
         raise HTTPException(422, str(error)) from error
     for result in results:
-        save_run(wid, result)
+        save_run(wid, result, body.temporary)
     return {
         "results": results,
         "notes": "Reranked and verified variants share the exact same draft. Human judgments are required before claiming quality improvements.",
@@ -454,7 +487,7 @@ def verify_statement(body: Question, wid=Depends(workspace)):
     ids = [str(x) for x in body.document_ids]
     validate_selection(wid, ids)
     result = run_claim_check(wid, body.question.strip(), ids)
-    save_run(wid, result)
+    save_run(wid, result, body.temporary)
     return result
 
 
@@ -462,9 +495,12 @@ def verify_statement(body: Question, wid=Depends(workspace)):
 def runs(wid=Depends(workspace)):
     with connection() as db:
         rows = db.execute(
-            "SELECT id,question,variant,created_at,result->'counts' AS counts,result->'latency_ms' AS latency_ms,result->'abstained' AS abstained FROM runs WHERE workspace_id=%s ORDER BY created_at DESC LIMIT 100",
+            "SELECT id,question,variant,created_at,encrypted,result->'counts' AS counts,result->'latency_ms' AS latency_ms,result->'abstained' AS abstained FROM runs WHERE workspace_id=%s ORDER BY created_at DESC LIMIT 100",
             (wid,),
         ).fetchall()
+    for row in rows:
+        if row.pop("encrypted"):
+            row["question"] = vault.unseal_text(row["question"], f"{wid}:run:{row['id']}:question")
     return {"runs": rows}
 
 
@@ -472,11 +508,11 @@ def runs(wid=Depends(workspace)):
 def get_run(rid: UUID, wid=Depends(workspace)):
     with connection() as db:
         row = db.execute(
-            "SELECT result FROM runs WHERE id=%s AND workspace_id=%s", (rid, wid)
+            "SELECT result,encrypted FROM runs WHERE id=%s AND workspace_id=%s", (rid, wid)
         ).fetchone()
     if not row:
         raise HTTPException(404, "Answer not found.")
-    return row["result"]
+    return json.loads(vault.unseal_text(row["result"]["sealed"], f"{wid}:run:{rid}:result")) if row["encrypted"] else row["result"]
 
 
 @app.get("/api/research")

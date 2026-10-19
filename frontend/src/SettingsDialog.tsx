@@ -7,12 +7,16 @@ export function SettingsDialog({
   onSave,
   serverKey,
   ollama,
+  cloudEnabled,
+  onPrivacy,
 }: {
   value: Settings;
   onClose: () => void;
   onSave: (s: Settings) => void;
   serverKey: boolean;
   ollama: boolean;
+  cloudEnabled: boolean;
+  onPrivacy: () => void;
 }) {
   const [form, setForm] = useState(value);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -56,8 +60,8 @@ export function SettingsDialog({
         <p className="privacy-note">
           <ShieldCheck size={16} />
           <span>
-            PDFs and saved answers are stored on this app's server. This is not
-            end-to-end encrypted.{" "}
+            Document content and saved answers are encrypted on the server.
+            The server decrypts them to do research. This is not end-to-end encrypted.{" "}
             <a
               className="text-link"
               href="https://github.com/Sankalp-gupta1/veritas-ai/blob/main/docs/PRIVACY.md"
@@ -80,10 +84,11 @@ export function SettingsDialog({
             }
           >
             <option value="extractive">Source excerpts · no API key</option>
-            <option value="gemini">Gemini · AI-written answers</option>
+            <option value="gemini" disabled={!cloudEnabled}>Gemini · {cloudEnabled ? "reviewed AI-written answers" : "blocked in Privacy center"}</option>
             {ollama && <option value="ollama">Ollama · local model</option>}
           </select>
         </label>
+        {!cloudEnabled && <p className="privacy-note"><ShieldCheck size={16} /><span>External AI is blocked. <button type="button" className="text-link" onClick={onPrivacy}>Open Privacy center</button> to allow reviewed Gemini requests.</span></p>}
         {form.provider === "gemini" && (
           <>
             <label>
@@ -122,8 +127,7 @@ export function SettingsDialog({
               <span>
                 The app keeps the entered key in this tab's memory and does not
                 save it to its database. Gemini generation sends it through our
-                backend to Google over HTTPS. Your question, selected passages
-                and file names go to Google too. Refreshing clears the entered
+                backend to Google over HTTPS. A preview shows your question and selected passages before you approve sending them. File names are replaced and obvious identifiers are masked. Refreshing or signing out clears the entered
                 key from app state. Check Google's data-use terms before sending
                 personal information.
               </span>
