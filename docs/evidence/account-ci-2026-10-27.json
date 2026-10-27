@@ -1,0 +1,31 @@
+{
+  "checked_on": "2026-10-27",
+  "application_commit": "5b352a71b4e277e2abca3f91755db7eccf10dc7b",
+  "workflow_run": 40434683240,
+  "workflow_url": "https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/40434683240",
+  "job_id": 121960416988,
+  "conclusion": "success",
+  "database": "native PostgreSQL 17 with pgvector, disposable CI service",
+  "migrations": [
+    "001_initial.sql",
+    "002_accounts_privacy.sql"
+  ],
+  "python": {
+    "passed": 32,
+    "skipped": 0,
+    "seconds": 12.33
+  },
+  "frontend": {
+    "passed": 12,
+    "test_files": 3
+  },
+  "production_build": "passed",
+  "verification_source": "GitHub Actions job status and decoded job logs",
+  "not_established": [
+    "Production account deployment",
+    "Browser account flow",
+    "Live Gemini generation",
+    "Independent security audit",
+    "Hallucination reduction"
+  ]
+}

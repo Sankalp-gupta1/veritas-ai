@@ -13,6 +13,10 @@ This record separates automated tests, real website checks and research measurem
 
 The initial account commit `374241b6ce882c8c947b7c71338d44f5bf115978` passed [GitHub CI run 39202087501](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/39202087501): **31 Python tests in 11.01 seconds, 12 React tests and the production build**, with a native PostgreSQL 17/pgvector service.
 
+**Final application commit `5b352a71b4e277e2abca3f91755db7eccf10dc7b` passed [GitHub CI run 40434683240](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/40434683240): 32 Python tests in 12.33 seconds, 12 React tests and the production build.** Both migrations ran successfully on native PostgreSQL 17/pgvector in CI. The job status and decoded logs were inspected. [Machine-readable record](evidence/account-ci-2026-10-27.json).
+
+The production alias was also checked on 27 October: its health response reported connected PostgreSQL and ready models, with no server Gemini key. It did not expose the new account/vault readiness fields, consistent with the earlier release remaining live. This was a read-only health request, not a repeated upload or privacy walkthrough.
+
 The final local check on 27 October passed **24 Python tests**, with **8 database tests skipped** because this shell could not connect to a disposable PostgreSQL server. **12 React tests and the TypeScript/Vite production build passed.** These are automated implementation checks, not a live account walkthrough. The extra Python test covers security/no-cache headers on rejected requests.
 
 | Area | What automated tests exercise |

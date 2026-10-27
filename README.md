@@ -191,7 +191,7 @@ Three things remain separate:
 
 ## Tests and research
 
-The first account/privacy commit passed **31 Python tests, 12 React tests and a production build** on native PostgreSQL 17/pgvector: [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/39202087501). The latest local check passed **24 Python tests (8 database tests skipped)**, **12 React tests**, and the production build. See [validation](docs/VALIDATION.md) for exact commits, newer CI results and coverage.
+The account/privacy application commit `5b352a7` passed **32 Python tests, 12 React tests and a production build** on native PostgreSQL 17/pgvector: [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/40434683240). Both database migrations ran successfully. See [validation](docs/VALIDATION.md) for exact coverage, logs and earlier runs. The [review PR](https://github.com/Sankalp-gupta1/veritas-ai/pull/1) contains this upgrade.
 
 **The account upgrade is not yet verified on the public website.** Vercel project access is blocked; database migration, private vault configuration and a live account walkthrough remain release requirements. Setup below describes the new branch. The live link currently points to the earlier release.
 
