@@ -142,6 +142,8 @@ def session(request: Request):
     except HTTPException as error:
         if error.status_code != 401:
             raise
+    if len(request.cookies.get(LEGACY_COOKIE, "")) != 64:
+        return {"account": None, "legacy_available": False}
     with connection() as db:
         legacy = legacy_workspace(db, request)
     return {"account": None, "legacy_available": bool(legacy)}

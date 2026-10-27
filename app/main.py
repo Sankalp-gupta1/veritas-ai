@@ -43,17 +43,19 @@ async def invalid_request(request, exc):
 @app.middleware("http")
 async def boundaries(request: Request, call_next):
     request_id = str(uuid4())
+
+    def reject(detail, status_code):
+        response = JSONResponse({"detail": detail}, status_code=status_code)
+        return secure_response(request, response, request_id)
+
     if request.url.path.startswith("/api/") and request.url.path != "/api/documents":
         length = request.headers.get("content-length", "0")
         if not length.isdigit() or int(length) > 64_000:
-            return JSONResponse({"detail": "This request is too large."}, status_code=413)
+            return reject("This request is too large.", 413)
     if request.url.path == "/api/documents" and request.method == "POST":
         length = request.headers.get("content-length", "0")
         if not length.isdigit() or int(length) > config.MAX_FILE_BYTES + 100_000:
-            return JSONResponse(
-                {"detail": "The upload is too large. Each PDF must be at most 4 MB."},
-                status_code=413,
-            )
+            return reject("The upload is too large. Each PDF must be at most 4 MB.", 413)
     if request.method in {
         "POST",
         "PUT",
@@ -61,17 +63,11 @@ async def boundaries(request: Request, call_next):
         "DELETE",
     } and request.url.path.startswith("/api/"):
         if request.headers.get("x-veritas-request") != "1":
-            return JSONResponse(
-                {"detail": "Please use the VeritasAI app to make this request."},
-                status_code=403,
-            )
+            return reject("Please use the VeritasAI app to make this request.", 403)
         origin = request.headers.get("origin")
         if origin and origin.rstrip("/") != f"{request.url.scheme}://{request.headers.get('host')}":
             # The development proxy sends the same Host header; production stays same-origin.
-            return JSONResponse(
-                {"detail": "This request came from an untrusted origin."},
-                status_code=403,
-            )
+            return reject("This request came from an untrusted origin.", 403)
     try:
         response = await call_next(request)
     except Exception:
@@ -81,6 +77,11 @@ async def boundaries(request: Request, call_next):
             {"detail": "Something went wrong. Please retry.", "request_id": request_id},
             status_code=500,
         )
+    return secure_response(request, response, request_id)
+
+
+def secure_response(request, response, request_id):
+    """Apply the same privacy headers to successful and rejected requests."""
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -104,7 +105,8 @@ async def boundaries(request: Request, call_next):
 def health():
     try:
         with connection() as db:
-            db.execute("SELECT 1 FROM schema_migrations LIMIT 1").fetchone()
+            schema = db.execute("SELECT max(version) AS version FROM schema_migrations").fetchone()
+        schema_ready = bool(schema and schema["version"] and schema["version"] >= 2)
         present = all(
             (config.MODEL_DIR / name / filename).exists()
             for name, filename in [
@@ -114,10 +116,11 @@ def health():
             ]
         )
         return {
-            "status": "ok" if present and vault.configured() else "configuration_required",
+            "status": "ok" if present and vault.configured() and schema_ready else "configuration_required",
             "database": "connected",
             "models_ready": present,
             "vault_ready": vault.configured(),
+            "account_schema_ready": schema_ready,
             "accounts_required": True,
             "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
             "ollama_available": bool(os.getenv("OLLAMA_URL")) and not config.PRODUCTION,

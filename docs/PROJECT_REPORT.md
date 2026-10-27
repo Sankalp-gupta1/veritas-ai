@@ -1,7 +1,7 @@
 # VeritasAI: implementation and preliminary evaluation
 
-**Updated:** 15 October 2026
-**Release:** 0.1.0, research prototype
+**Updated:** 27 October 2026
+**Release:** research prototype with an account/privacy upgrade awaiting deployment
 **Owner:** Sankalp Gupta
 
 ## 1. What the project solves
@@ -12,10 +12,13 @@ This is source-support checking. A wrong paper can still support a wrong claim. 
 
 ## 2. Delivery status
 
+The original public website was verified on 15–16 October. The newer `privacy-accounts` branch is tested separately and is not yet verified on production. Current deployment access is blocked; see [deployment](DEPLOYMENT.md) and [validation](VALIDATION.md).
+
 | Requested output | Current state |
 |---|---|
 | React website with multiple PDF uploads | Live on Vercel; production build and desktop browser walkthrough pass. Mobile/keyboard coverage remains incomplete. |
 | Python/FastAPI API and PostgreSQL vector search | Implemented and integration-tested with real SQL and local models. |
+| Account and privacy upgrade | Email/password confirmation, recovery codes, revocable sessions, encrypted content, reviewed Gemini disclosure, history controls and export/deletion implemented. See validation for tests and release status. |
 | Persistent cloud database | Dedicated `veritas` database on Neon; live uploads, queries and workspace isolation exercised through the public website. |
 | Questions with exact sources, pages and quotes | Implemented. Source-excerpt mode works without a generative API key. |
 | AI-written answers | Gemini and self-hosted Ollama adapters implemented. No live provider run was available during this release. |
@@ -29,7 +32,7 @@ This is source-support checking. A wrong paper can still support a wrong claim. 
 
 ## 3. A user's journey
 
-The browser creates a private workspace using an unguessable cookie. The user uploads PDFs or explicitly imports the included fictional examples. The app reads physical pages, creates bounded text passages, computes embeddings, and saves the originals, extracted text and vectors in PostgreSQL.
+In the new version, the user creates an account with email, password and password confirmation, saves a private recovery code, then uploads PDFs or imports fictional examples. The server reads physical pages, creates text passages and computes search vectors. Originals, filenames and extracted text are encrypted before storage; search vectors remain readable metadata. External AI and answer history start off.
 
 The user selects documents and can choose one of three activities:
 
@@ -37,7 +40,7 @@ The user selects documents and can choose one of three activities:
 2. **Check a claim:** test a user's statement against local document evidence. No text-generating API is required.
 3. **AI-written answer:** let Gemini or a local Ollama model draft short claims, then apply the evidence checks.
 
-A citation opens the original PDF and highlights the quote in extracted page text. Users can reopen saved results, download an evidence record, compare retrieval methods, or delete documents. Deleting a document also clears saved workspace answers because those answers contain copies of source text.
+A citation opens the original PDF and highlights the quote in extracted page text. Users can opt into history, reopen saved results, download an evidence record, compare retrieval methods, or delete documents. Gemini requires enabling external AI and reviewing the exact outgoing, heuristically masked question and passages. Privacy receipts show whether external AI was used and history was saved. Deleting a document also clears saved workspace answers because those answers contain copies of source text.
 
 ## 4. Architecture and important choices
 
@@ -53,11 +56,11 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md) for the 
 
 ## 5. What was actually tested
 
-The test suite exercises PDF parsing, real model inference, citation provenance, source isolation, deletion, API error handling and experiment scoring. The API integration fixture uses PGlite, a PostgreSQL build running in WebAssembly, with the pgvector extension and a PostgreSQL socket adapter. It executes the migration and queries; it is not an in-memory dictionary pretending to be a database. It is still not the same runtime as native PostgreSQL or hosted Neon.
+The test suite exercises PDF parsing, real model inference, citation provenance, source isolation, deletion, API error handling and experiment scoring. An early API integration run used PGlite, a PostgreSQL build running in WebAssembly, with the pgvector extension and a PostgreSQL socket adapter. It executes the migration and queries; it is not an in-memory dictionary pretending to be a database. It is still not the same runtime as native PostgreSQL or hosted Neon.
 
 The suite also uses controlled provider responses to test JSON parsing, safe errors, bounded retries and reuse of the same draft between reranked and verified variants. Those responses are test inputs, not live LLM observations or research results. The research scorer checks that withholding every claim does not produce a perfect factual score, and refuses unreviewed outputs.
 
-React component tests check citation interactions and safe rendering of model text. TypeScript and the production build are checked. GitHub Actions now runs these checks against native PostgreSQL 17 with pgvector. The reviewed fix passed 23 Python tests, 2 React tests and the frontend build: [CI run](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38737165149).
+React component tests check citation interactions, safe rendering, account forms, recovery acknowledgement and sharing approval. GitHub Actions runs Python integration tests against native PostgreSQL 17 with pgvector, then frontend tests and a production build. The first account/privacy commit passed 31 Python tests and 12 React tests: [CI run](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/39202087501). Later checks and their exact commits belong in the dated validation record.
 
 The exact release commands and outcomes are recorded in [VALIDATION.md](VALIDATION.md). Live API and desktop browser results are recorded separately from unit tests. Docker execution, live Gemini calls, mobile/keyboard accessibility, cold starts and concurrent load remain unverified.
 
@@ -87,9 +90,9 @@ ALCE, FActScore, RARR, Self-RAG and SciFact already study related ideas. Veritas
 
 ## 8. Privacy, limits and remaining work
 
-The application uses workspace-scoped SQL queries, hashed capability tokens, SameSite/HttpOnly cookies, same-origin mutation checks, parameterized SQL, explicit upload/storage bounds, and source-aware deletion. A Gemini key entered in settings stays in tab memory and is not persisted by the application. Relevant passages leave the server when an external generator is selected.
+The new version uses account-scoped SQL, Argon2id password hashes, hashed opaque sessions, SameSite/HttpOnly cookies, a server-enforced inactivity timeout, same-origin mutation checks, and AES-256-GCM content encryption. Source-aware deletion removes saved evidence too. A Gemini key entered in settings stays in tab memory. The server blocks external AI by default and requires a short-lived, one-use approval bound to the actual outgoing content. Automatic masking can miss private data; the runtime can decrypt content. These controls are not end-to-end encryption or a leak-proof guarantee.
 
-The release needs account-based authentication and recovery, a restricted database runtime role, durable access controls suitable for a public service, stronger upload resource isolation, background ingestion and retention cleanup before a broad public launch. Limits also include no OCR, imperfect extraction of tables and columns, English-oriented models, no exhaustive conflict search and no robust multi-hop evidence combination.
+The account upgrade still needs a completed hosted migration and release rehearsal. Broader public use also needs verified email, MFA/passkeys, key rotation, a restricted database runtime role, stronger upload isolation, background ingestion and scheduled retention cleanup. Limits also include no OCR, imperfect extraction of tables and columns, English-oriented models, no exhaustive conflict search and no robust multi-hop evidence combination.
 
 These are documented engineering limits, not a completed security audit. See [SECURITY.md](SECURITY.md).
 

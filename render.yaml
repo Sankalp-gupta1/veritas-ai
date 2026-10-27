@@ -9,6 +9,8 @@ services:
         sync: false
       - key: APP_ENV
         value: production
+      - key: VERITAS_VAULT_KEY
+        sync: false
       - key: PORT
         value: "8000"
       - key: GEMINI_API_KEY

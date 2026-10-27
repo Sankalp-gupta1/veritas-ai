@@ -29,6 +29,7 @@ services:
     environment:
       DATABASE_URL: postgresql://veritas:veritas_local_only@db:5432/veritas
       APP_ENV: development
+      VERITAS_VAULT_KEY: ${VERITAS_VAULT_KEY:?Create a private vault key in .env before starting}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
     depends_on:

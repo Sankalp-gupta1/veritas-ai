@@ -27,6 +27,16 @@ Primary model sources:
 
 Python/FastAPI, pypdf, NumPy, Model2Vec, ONNX Runtime, tokenizers, psycopg and pgvector power the backend. React, Vite, TypeScript, Lucide and Recharts power the UI. Matplotlib generates research figures and ReportLab creates the authored PDFs. Each dependency retains its own license.
 
+Account and content protection use maintained libraries, not a new cryptographic algorithm. The installed package metadata identifies these licenses:
+
+| Library | Role | Version | License |
+|---|---|---|---|
+| `argon2-cffi` | Argon2id password hashing | 25.1.0 | MIT |
+| `cryptography` | AES-GCM authenticated encryption | 50.0.2 | Apache-2.0 OR BSD-3-Clause |
+| `email-validator` | Email syntax and normalization | 2.3.0 | Unlicense |
+
+`requirements.lock.txt` records the resolved production dependencies used by the tested Python 3.12 environment. Dependency versions and licenses do not establish that the complete application has passed a security audit.
+
 Google Gemini is an optional external API. It is not an open-source model. `gemini-3.5-flash-lite` is the configured default; model availability and pricing can change. Official references checked on 14 October 2026:
 
 - https://ai.google.dev/gemini-api/docs/models

@@ -74,6 +74,20 @@ def test_validation_errors_never_echo_credentials():
         assert "script-src 'self'" in response.headers["content-security-policy"]
 
 
+def test_rejected_requests_are_not_cacheable_and_have_security_headers():
+    with TestClient(app) as client:
+        rejected = [
+            client.post("/api/auth/login", json={}),
+            client.post("/api/auth/login", headers={**HEADERS, "Origin": "https://untrusted.example"}, json={}),
+            client.post("/api/auth/login", headers=HEADERS, content=b"x" * 64_001),
+        ]
+        assert [response.status_code for response in rejected] == [403, 403, 413]
+        for response in rejected:
+            assert response.headers["cache-control"] == "private, no-store"
+            assert response.headers["x-content-type-options"] == "nosniff"
+            assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+
+
 @integration
 def test_register_confirm_login_logout_recovery_and_private_defaults():
     data = credentials()
