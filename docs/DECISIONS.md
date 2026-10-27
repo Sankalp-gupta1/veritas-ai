@@ -24,9 +24,23 @@ POTION static embeddings, TinyBERT reranking and a quantized DeBERTa verifier av
 
 The project limits PDFs to 4 MB. Keeping bytes, pages and chunks in one transaction makes indexing and deletion simple, durable and reviewable. It avoids pretending serverless local storage is persistent. This increases database size and bandwidth; private object storage should replace `bytea` when limits grow. This is a deliberate bounded-prototype choice, not a recommendation for a large document platform.
 
-## Start with anonymous private workspaces
+## Require an account before opening private documents
 
-A random 256-bit cookie token makes the first-use flow easy. Only its hash is stored. It is a bearer capability, not a full user account. There is no recovery, organization membership or cross-device access. A public product should add verified accounts, database row-level security, retention controls and a restricted runtime role.
+Email, password and password confirmation create an account with one workspace. Argon2id protects the password; a random session token stays in an HttpOnly cookie and only its hash is stored. Server-side sessions can expire or be revoked. This supports signing in on another device without exposing document access tokens to JavaScript.
+
+Email is an identifier, not proof of identity. No email delivery service is configured, so recovery uses a private random code shown once. Losing both the password and code means losing access. Email verification, passkeys and MFA remain future work. Existing anonymous workspaces can be imported only by the browser holding their old cookie; importing assigns ownership, encrypts old content and invalidates that capability in one transaction.
+
+## Encrypt stored content without claiming end-to-end encryption
+
+The server needs readable passages for search and verification. AES-256-GCM encrypts PDFs, extracted text, filenames, email and saved answers before database writes. Each record is bound to its workspace, row and field. Losing or replacing the vault key makes these records unreadable; setup must keep a private backup.
+
+The runtime can decrypt content. Vectors, hashes, sizes and timestamps remain queryable. This protects against a database-only disclosure but does not protect against a compromised application server. True end-to-end encryption would require a different processing architecture.
+
+## Make external disclosure an explicit action
+
+Gemini starts blocked, including direct API requests. Enabling it does not approve every future question: the user reviews the actual outgoing question and passages before each request. Common identifiers are masked and filenames become source labels. A short-lived, single-use approval binds the exact payload, model, question, sources and privacy-settings version. Editing any of them requires a fresh review.
+
+Masking is a precaution, not reliable anonymization. Names and sensitive details can remain. The preview lets the user inspect those limits; local source excerpts and claim checking remain available without Gemini. History also starts off, while uploaded PDFs remain until explicitly deleted.
 
 ## Offer useful keyless tools without mislabelling them
 

@@ -1,10 +1,41 @@
 # What was actually tested
 
-**Date:** 15 October 2026
+**Original public-release review:** 15 October 2026
+**Latest account/privacy work:** 27 October 2026
 **Website:** https://veritas-ai-v8lw.vercel.app/
 **Reviewed application commit:** `9804b4d2ce28dc07bc9c429d3fecfca9ef08cf5b`
 
 This record separates automated tests, real website checks and research measurements. Passing software tests does not prove that every answer is correct.
+
+## Account and privacy upgrade — 19–27 October 2026
+
+**Release state: branch implementation, not verified on the production website.** The new code is on [`privacy-accounts`](https://github.com/Sankalp-gupta1/veritas-ai/tree/privacy-accounts). Vercel access for the project returned 403; on 27 October the connected account listed no accessible teams. The database migration and production vault secret have not been applied by this upgrade. The older live results below do not test the new account system.
+
+The initial account commit `374241b6ce882c8c947b7c71338d44f5bf115978` passed [GitHub CI run 39202087501](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/39202087501): **31 Python tests in 11.01 seconds, 12 React tests and the production build**, with a native PostgreSQL 17/pgvector service.
+
+**Final application commit `5b352a71b4e277e2abca3f91755db7eccf10dc7b` passed [GitHub CI run 40434683240](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/40434683240): 32 Python tests in 12.33 seconds, 12 React tests and the production build.** Both migrations ran successfully on native PostgreSQL 17/pgvector in CI. The job status and decoded logs were inspected. [Machine-readable record](evidence/account-ci-2026-10-27.json).
+
+The production alias was also checked on 27 October: its health response reported connected PostgreSQL and ready models, with no server Gemini key. It did not expose the new account/vault readiness fields, consistent with the earlier release remaining live. This was a read-only health request, not a repeated upload or privacy walkthrough.
+
+The final local check on 27 October passed **24 Python tests**, with **8 database tests skipped** because this shell could not connect to a disposable PostgreSQL server. **12 React tests and the TypeScript/Vite production build passed.** These are automated implementation checks, not a live account walkthrough. The extra Python test covers security/no-cache headers on rejected requests.
+
+| Area | What automated tests exercise |
+|---|---|
+| Accounts | Password confirmation, Argon2 hashes, encrypted email, private defaults, login/logout, recovery-code rotation and session expiry |
+| Ownership | Separate accounts cannot read each other's originals, pages or history; old cookies cannot authorize private routes |
+| Content encryption | Original PDF recovery, encrypted text/name/result records, fresh nonces, tamper rejection and row binding |
+| External AI gate | Default block, exact-payload approval binding, cross-account/tampered approval rejection and one-use replay prevention |
+| Privacy choices | History off by default, opt-in, temporary-answer override, export and source-aware deletion |
+| Legacy upgrade | Explicit ownership claim encrypts the old workspace transactionally and invalidates its old token |
+| Browser components | Matching passwords, recovery acknowledgement, clearing private state and explicit sharing approval |
+
+Provider calls in these tests use controlled responses and fictional keys. They do not measure Gemini privacy or model quality. A live-check script, `scripts/check_accounts_live.py`, is included for a configured release; it has not yet passed against production. A local browser rendering attempt could not start: the environment had no Chromium executable, and its browser download returned an invalid archive. No new desktop/mobile screenshots or browser-flow pass are claimed. Component tests still ran successfully.
+
+A disposable Neon branch was created for a migration rehearsal. Automatic approval review failed with a model-capacity error before the SQL ran. No successful Neon migration is claimed. See [deployment steps](DEPLOYMENT.md) for the remaining release gates.
+
+## Historical checks of the earlier anonymous-workspace release
+
+The following records retain their original dates, counts and limits. Their scripts apply to that earlier release.
 
 ## Privacy review — 16 October 2026
 
@@ -130,6 +161,6 @@ The sentence-selection fix was developed after seeing a fixture failure. Its reg
 - Docker build/execution or a Render deployment.
 - Full mobile, keyboard, screen-reader and cross-browser coverage.
 - Service-restart durability, cold-start performance, concurrent load and capacity.
-- A complete security audit, account recovery, restricted runtime database role or production-grade upload isolation.
+- A complete security audit, restricted runtime database role or production-grade upload isolation. Account recovery in the new branch is tested separately above and is not a completed hosted recovery walkthrough.
 
 Testing was limited to fictional data. No existing user's private documents were used. Do not describe this prototype as fully production-hardened or universally accurate.

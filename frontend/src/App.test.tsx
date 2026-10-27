@@ -76,6 +76,10 @@ beforeEach(() => {
         ollama_available: false,
       };
     if (path === "/workspace") return {};
+    if (path.startsWith("/privacy/preview")) return {
+      consent_token: "one-use-fixture-token", recipient: "Google Gemini", expires_in_seconds: 600,
+      notice: "Review this text before sharing.", masked: {}, payloads: [{ method: "verified", question, evidence: [{ chunk_id: "chunk-1", source: "Source 1", text: question }] }],
+    };
     if (path === "/documents")
       return {
         documents: [
@@ -107,7 +111,7 @@ afterEach(() => {
 });
 
 async function start() {
-  const result = render(<App />);
+  const result = render(<App account={{ id: "test-account", email: "test@example.com", email_verified: false, workspace_id: "test-workspace", cloud_enabled: true, save_history: true, idle_timeout_minutes: 30 }} onAccount={vi.fn()} onSignedOut={vi.fn()} />);
   await screen.findByText("Workspace ready");
   await waitFor(() =>
     expect(
@@ -229,6 +233,12 @@ it.each(["verify", "extractive", "gemini"])(
       { target: { value: question } },
     );
     fireEvent.click(screen.getByRole("button", { name: "Ask question" }));
+    if (mode === "gemini") {
+      await screen.findByText("You're in control of this handoff.");
+      expect(request.mock.calls.some(([url]) => url === "/ask")).toBe(false);
+      fireEvent.click(screen.getByRole("checkbox", { name: /I reviewed this text/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Approve and ask Gemini" }));
+    }
     await screen.findByText("Supported by source");
     const path = mode === "verify" ? "/verify" : "/ask";
     const submission = request.mock.calls.find(([url]) => url === path)!;

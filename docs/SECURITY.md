@@ -1,51 +1,54 @@
-# Security controls and remaining work
+# Security design and honest limits
 
-For the plain-English data flow, provider policies and deletion limits, read [Where your data goes](PRIVACY.md). This is a bounded research prototype, not an independently certified confidential-document service.
+Read [Privacy](PRIVACY.md) first for a plain-English explanation. These controls reduce defined risks; they do not establish zero risk or independent certification.
 
-## Implemented controls
+## Threats addressed
 
-- Random 256-bit workspace tokens, stored as hashes, with HttpOnly and SameSite=Strict cookies. Production adds Secure.
-- Workspace ownership checks on document lists, downloads, pages, retrieval, saved answers and deletion.
-- Parameterized SQL, including selected document IDs. Model text never becomes a SQL command.
-- Same-origin mutation checks plus a custom request header. These supplement workspace authentication; they do not replace it. No permissive cross-origin API policy.
-- Private/no-store caching for API responses. Original PDFs are served through the authenticated API with a sandbox content-security policy, not public static paths.
-- React renders document and model text as text, without `dangerouslySetInnerHTML`.
-- Uploaded document instructions are untrusted. The generator has no execution tools.
-- Browser-entered API keys are held in tab memory. The interface sends them only for Gemini generation, using headers. The reviewed code does not write them to browser storage or database records.
-- The application error logger records request IDs and paths, not document bodies, credentials or raw provider error payloads. Hosting log drains and crash-dump settings were not audited.
-- Database-backed request counters and storage limits bound the installation's intended use.
-- Document deletion removes the active database's raw file, pages and vectors and clears all saved answers in that workspace. This is not a promise of immediate backup or provider erasure.
-- Exact page/quote checks reject invented citations and references outside the selected workspace. This concerns evidence integrity, not confidentiality.
+| Threat | Implemented control | Remaining boundary |
+|---|---|---|
+| Another user guesses a record ID | Every private route derives workspace ownership from a server session; queries scope documents, pages, vectors, answers and deletion. | No database row-level security yet. |
+| Password database disclosure | Argon2id: 64 MiB, three iterations, parallelism one; library-generated salts; 15–128 character passphrases. | MFA, password-breach checks and email ownership verification are not implemented. |
+| Stolen database content | AES-256-GCM content fields; fresh 96-bit nonces; row/field-associated data; separate vault secret. | Runtime compromise or key + database compromise can reveal content; vectors and metadata remain readable. |
+| Session theft or a shared device | 256-bit opaque session tokens, only hashes in DB, HttpOnly/Secure/SameSite=Strict production cookies, idle/absolute expiry, revocation and visible lock/logout. | A compromised browser or active stolen cookie can still act as the user until revocation/expiry. |
+| Cross-site requests | Same-origin mutation checks, required custom header, strict cookies, no permissive CORS. | Same-origin script compromise remains serious. |
+| Browser injection/tracking | Text rendering, restrictive CSP, no third-party analytics/fonts/scripts, no-store private responses, no-referrer, sandboxed private PDF responses. | Dependencies and browser extensions are outside that guarantee. |
+| Silent external-AI disclosure | Server-side default block, redacted/pseudonymous preview, one-use hashed approval token tied to payload/preferences/workspace, ten-minute expiry. | Masking is heuristic; users must review; in-flight requests cannot be recalled. |
+| Unwanted answer retention | History off by default; temporary-answer override; encrypted saved results; deletion/export UI. | Uploaded PDFs persist, backups/exports/provider logs are separate. |
+| Sensitive diagnostics | Generic validation errors without echoed input; application logger stores request ID/path, not raw exceptions, prompts or keys. | Provider/platform crash dumps and log drains have not been audited. |
+| Abuse | Database-backed per-identifier/account and global rate limits, file/page/storage limits. | Global limits can cause denial of service; no independent WAF/load review. |
 
-## Trust boundaries
+## Authentication implementation
 
-The backend reads document text and holds database access. There is no end-to-end or application-level document encryption. Authorized infrastructure or database operators can technically read application content. PostgreSQL tables are separated by application query checks, not row-level security policies.
+`app/auth.py` implements this small Python application's account flow using the maintained `argon2-cffi` library. It uses opaque database sessions rather than a custom JWT format. The Argon2 parameters exceed the minimum in the [OWASP password-storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). Session decisions follow [OWASP's session guidance](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html).
 
-The workspace cookie grants access to that workspace. Someone who controls the browser or steals its cookie could access it. There is no account recovery, token-rotation UI, device management, organization sharing or automated retention cleanup. A 90-day cookie lifetime does not delete corresponding records.
+Email is encrypted and indexed by a keyed fingerprint. Password comparison, password changes and recovery are serialized against the account row. Password recovery uses a 256-bit random code shown once; only its hash persists. Changing/resetting a password invalidates sessions and rotates recovery. Generic login failures do not disclose whether an email exists. Registration errors are intentionally nonspecific, but the service is not claimed immune to account enumeration or timing attacks.
 
-Provider requests send questions, selected text, passage IDs and file names to the configured AI service. The Gemini key is visible to the app backend in memory before being relayed to Google. Local claim checks and source excerpts do not call Gemini. See the [privacy guide](PRIVACY.md#googles-data-use-rules) for provider-policy distinctions.
+Sessions expire after seven days absolutely and after thirty minutes without an authenticated request. The UI also clears private state after inactivity. Production uses `__Host-veritas_session`; development uses `veritas_session` on localhost. Both are HttpOnly and SameSite=Strict; production requires HTTPS/Secure. Legacy anonymous cookies cannot authorize private API routes. They can only claim the same browser's unowned old workspace during explicit registration.
 
-Files persist until explicitly deleted. Clearing browser data alone does not remove server content. The API supports `DELETE /api/workspace`; rate-limit metadata remains outside that deletion cascade. Provider logs, exports and backups have separate lifetimes.
+## Vault implementation
 
-## Upload processing
+`app/vault.py` uses the [cryptography AESGCM implementation](https://cryptography.io/en/stable/hazmat/primitives/aead/). It creates a new random nonce for every encrypted field and binds the workspace, row and field through associated data. Modified ciphertext or a different identity fails authentication. Writes fail closed if `VERITAS_VAULT_KEY` is missing or invalid.
 
-PDF reading occurs in the API process. Input and extraction limits reduce ordinary resource abuse but are not a complete defense against malicious parser inputs. Before broader deployment, move parsing into resource-limited worker processes, add malware scanning where appropriate, and enforce ingress limits for streamed/chunked requests.
+Never regenerate the production key during build, startup, migration or deployment. Keep it out of Git, frontend bundles, SQL records, screenshots and logs. Keep a secure backup. Automated key rotation is not implemented. The key also protects email lookup fingerprints, so key replacement requires a planned content and account-index migration.
 
-The included sample data is fictional. Model weights are fetched from pinned public revisions during setup; search and verification inference run on the app server. No personal documents were used for validation.
+The application decrypts records in memory. It is not E2EE, zero-knowledge or confidential computing. Printed page labels, vectors, hashes, structural metadata and aggregate result metadata are not encrypted by this layer.
 
-## Verification and limits
+## Disclosure implementation
 
-The [16 October live privacy check](evidence/privacy-live-2026-10-16.json) passed 30 assertions against two new workspaces. It covered cookie flags, no-store responses, unauthorized and cross-workspace access, original-file integrity, deletion and cleanup. Provider-payload and browser-key regression tests use fictional keys and controlled responses.
+`app/privacy.py` masks common email/phone/key/secret patterns and replaces source filenames with neutral labels. Preview tokens contain no text and are stored hashed with a digest of the approved payload, operation and privacy version. A changed question, document set, model or preferences invalidates approval. Tokens are consumed atomically; replay fails. No text or API key is persisted in the consent table. Recomputing a changed evidence payload requires new approval.
 
-This is not a full penetration test or a complete dependency, secret-history, cloud-permission or backup-retention audit. No real Gemini key was used. Passing these tests cannot prove that a leak is impossible or that no incident has occurred.
+`app/pipeline.py` refuses Gemini generation without prepared disclosure data. Restored placeholders go through original exact-quote and semantic checks. Provider retry requests contain the same approved content. The generator has no browser, shell, arbitrary URL or database tools; uploaded instructions are treated as untrusted data.
 
-## Work before handling sensitive documents
+## Data deletion and concurrency
 
-1. Add accounts, recovery and credential rotation with an explicit access model.
-2. Audit cloud permissions, introduce a restricted runtime database role and database row-level security.
-3. Isolate PDF parsing and enforce streaming upload limits.
-4. Set deletion/retention rules covering active records, rate-limit metadata, logs and backups; test restoration and purge behavior.
-5. Add content-minimizing monitoring, abuse detection and incident procedures.
-6. Complete independent security, accessibility and load reviews for the deployed configuration.
+Document deletion, workspace clearing and answer saving lock the workspace row. Saving checks source existence before writing encrypted history. History preferences are re-read at save time, so disabling history applies to unfinished answers too. Clearing history does not promise to cancel a different in-flight request. Deleting an account cascades through its workspace and private records. Retention limits and backup caveats are documented in [Privacy](PRIVACY.md).
 
-These are proposed improvements, not features that have already been delivered.
+## Tests and release requirements
+
+Tests cover cipher tampering/row substitution, missing-key refusal, sensitive-input validation errors, masking/restoration, private defaults, registration/confirmation, recovery/revocation/expiry, original PDF recovery, encrypted DB records, cross-account access, history opt-out and disclosure bypass/replay. Frontend tests cover matching passwords, recovery-code acknowledgement, session clearing and approval before Gemini calls.
+
+Use a disposable PostgreSQL/pgvector database for integration tests. Do not point the test suite at production. Production smoke tests use only newly created fictional accounts and remove them in `finally` blocks. See [Validation](VALIDATION.md) for actual outcomes, rather than treating this checklist as proof of passing.
+
+## Next security work
+
+Verified email plus MFA/passkeys; restricted runtime database role and RLS; KMS-backed key rotation; isolated PDF parsing and streamed-body ingress limits; scheduled retention and tested backup purge; dependency/cloud-permission review; independent penetration, load and accessibility tests. No certified compliance or “100% leak-proof” claim is made.

@@ -22,6 +22,12 @@ You do not need to read the whole project at once. Start with the README, run th
 | `app/generation.py` | Calls Gemini or a local Ollama server and validates the model's JSON. | Change the generator, prompt or retry behavior. |
 | `app/verification.py` | Checks quote integrity, support and possible counterevidence. | Understand why a claim was kept or withheld. |
 | `app/pipeline.py` | Connects retrieval, reranking, generation and verification. | Trace one complete answer or comparison. |
+| `app/auth.py` | Creates accounts, checks passwords, expires/revokes sessions and handles private recovery codes. | Understand who can access a workspace. |
+| `app/vault.py` | Encrypts/decrypts content with AES-GCM and binds it to its record. | Understand protection against a database-only disclosure. |
+| `app/privacy.py` | Privacy settings, masking, one-use sharing approval, exports and action receipts. | Trace what may leave the server. |
+| `app/security.py` | Shared rate limits, token hashing and content-free audit events. | Inspect common security boundaries. |
+| `app/storage_upgrade.py` | Encrypts an older browser workspace when its owner claims it. | Understand the non-destructive account transition. |
+| `migrations/002_accounts_privacy.sql` | Adds account/session/privacy tables and encryption flags without dropping existing records. | Review the privacy schema upgrade. |
 | `app/main.py` | Defines HTTP routes, ownership checks, uploads, saved answers and deletion. | Add an endpoint or debug an API error. |
 | `migrations/001_initial.sql` | Creates the tables, vector extension and indexes. | Understand how information is stored. |
 
@@ -30,7 +36,13 @@ You do not need to read the whole project at once. Start with the README, run th
 | File | Plain-English purpose |
 |---|---|
 | `frontend/index.html` | The HTML page that loads React. |
-| `frontend/src/main.tsx` | Starts React and imports the stylesheet. |
+| `frontend/src/main.tsx` | Starts the account gate and imports the stylesheets. |
+| `frontend/src/AuthGate.tsx` | Email/password signup, login, recovery and inactivity/session locking. |
+| `frontend/src/RecoveryCard.tsx` | Shows the one-time recovery code and asks you to save it. |
+| `frontend/src/PrivacyCenter.tsx` | Real server-backed privacy controls, exports, deletion and security actions. |
+| `frontend/src/DisclosureDialog.tsx` | Displays exact outgoing evidence and asks for one explicit Gemini approval. |
+| `frontend/src/privacy.css` | Responsive account screens, privacy controls and disclosure styling. |
+| `frontend/src/AuthGate.test.tsx` | Tests confirmation, recovery acknowledgement and clearing the private screen. |
 | `frontend/src/App.tsx` | Main workspace: library, uploads, selected files, questions, history and comparison. |
 | `frontend/src/ClaimCard.tsx` | One claim, its status, citations and explanation. |
 | `frontend/src/EvidencePanel.tsx` | Original PDF and extracted page text with the matching quote highlighted. |
@@ -59,8 +71,12 @@ TypeScript is JavaScript with descriptions of expected data types. It helps catc
 | `scripts/migrate.py` | Applies the SQL schema to the configured database. |
 | `scripts/build.py` | Downloads models, builds React and copies static assets to the Vercel CDN directory. |
 | `scripts/create_samples.py` | Creates the fictional Cedar and Willow PDFs with ReportLab. |
-| `scripts/smoke_live.py` | Checks a deployed site using fresh test workspaces; records results and deletes its own data. |
-| `scripts/check_privacy_live.py` | Runs focused live access, cookie and deletion checks with disposable fictional data; saves a redacted report. |
+| `scripts/smoke_live.py` | Historical anonymous-workspace test, retained for the earlier release; its HTTP helper is reused by current checks. |
+| `scripts/check_privacy_live.py` | Historical 16 October anonymous-workspace regression script. |
+| `scripts/check_accounts_live.py` | Current live account/encryption/consent boundary test; uses only fictional accounts and removes them. |
+| `scripts/create_vault_key.py` | Generates a local vault key without printing or replacing an existing key. |
+| `tests/conftest.py` | Supplies a public fixture-only encryption key during tests. Never a production secret. |
+| `tests/test_privacy.py` | Tests encrypted records, masking/restoration, account boundaries, session expiry, recovery and approval bypasses. |
 | `scripts/evaluate.py` | Runs the actual 24-pair local NLI evaluation and creates figures. |
 | `tests/test_evidence.py` | Tests parsing, offsets, exact quotes, unknown sources and real model decisions. |
 | `tests/test_generation.py` | Tests provider formatting, malformed output, safe errors and bounded retries using controlled HTTP responses. |

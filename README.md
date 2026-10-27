@@ -10,7 +10,7 @@ VeritasAI is a research workspace that helps you ask questions about PDFs and ch
 
 A useful answer should let you ask, **“Where did that come from?”** In VeritasAI, each citation opens the exact PDF page and supporting text. If a claim is unsupported, the app withholds it. If retrieved sources appear to disagree, you can inspect both sides.
 
-**Live status, 16 October 2026:** the React website and FastAPI backend are running on Vercel with a connected PostgreSQL database and local search/checking models. PDF uploads, source excerpts and claim checks work without a paid AI key. The server has **no Gemini key configured**, so AI-written answers require your own key in **AI settings**. This is a working research prototype; it does not guarantee that a source or answer is true.
+**Account and privacy upgrade:** this version adds email/password accounts, encrypted content storage, and an explicit review before any Gemini request. Source excerpts and claim checks need no AI key. See [release validation](docs/VALIDATION.md) for the exact tested commit and deployment status; older live-test reports describe the previous anonymous-workspace version.
 
 ## Problem statement
 
@@ -31,34 +31,40 @@ VeritasAI connects document search, optional answer generation and a separate ev
 
 RAG means *retrieval-augmented generation*: the model receives passages found in your documents before writing its answer. The research question is whether claim-level checking reduces unsupported answers **without hiding too many useful facts**. That improvement has not yet been established on a large independent benchmark.
 
-## Privacy at a glance
+## Privacy you can see and control
 
-**This is not a 100% leak-proof or end-to-end encrypted service.** On the live site, PDFs, extracted text and saved answers are stored in a cloud database. The backend can read them.
+Create an account with **email, password and confirm password**. Save the recovery code shown once. Each account has its own document workspace, and the server checks ownership on every private request.
 
-| Mode | Where your content is processed |
+| Protection | What it actually does |
 |---|---|
-| Source excerpts / Check a claim | On the hosted app server; these paths do not call Gemini. |
-| Gemini answers / Compare methods | The app also sends your question, selected passages and file names to Google. Your own API key still uses an external AI service. |
-| A fully self-hosted setup | You control the app, database and optional local model; privacy depends on your configuration. |
+| External AI starts off | The server blocks Gemini until you enable reviewed requests in **Privacy center**. A supplied API key cannot bypass this. |
+| Review before sharing | See the exact outgoing question and passages. Original source labels are replaced. Obvious emails, phone numbers and secrets are masked. Approve one request or cancel. |
+| Encrypted content storage | AES-256-GCM protects PDF bytes, filenames, page/chunk text, saved questions/answers and account email fields before database storage. |
+| History starts off | New answers are not saved unless you enable history. You can also make one answer temporary. Uploaded PDFs still remain until deleted. |
+| Private sessions | HttpOnly cookies, server-side expiry, 30-minute inactivity lock, and sign-out on all devices. Passwords use Argon2id hashes. |
+| Data controls | Export your text and answers, clear history, delete workspace data, or delete your account after confirming your password. |
+| Visible privacy receipts | Every answer says whether an external AI was used and whether history was saved. A content-free activity log records privacy actions. |
 
-Provider terms depend on your project and region. Read [the data-flow and privacy guide](docs/PRIVACY.md) before uploading sensitive material. Clearing cookies does not delete server records; deleting a PDF also clears all saved answers in its workspace. Active-database deletion cannot promise immediate backup or provider erasure.
+**This is not end-to-end encryption or a 100% leak-proof service.** The server can decrypt content to process it. Search vectors, document hashes, sizes, page numbers and timestamps remain readable database metadata. Automatic masking can miss names and other private information. Backups and Google have their own retention rules.
+
+[Read the plain-English privacy guide](docs/PRIVACY.md) and [technical security notes](docs/SECURITY.md). Start with fictional samples or public papers.
 
 ## Try it in two minutes — no installation
 
-1. [Open VeritasAI](https://veritas-ai-v8lw.vercel.app/) and wait for **Workspace ready**.
+1. Open your configured account-release deployment (see the release note above). Create an account, confirm your password, and save your recovery code. Then wait for **Workspace ready**.
 2. Click **Try our authored sample documents**, or upload a text-based PDF.
 3. Choose **Check a claim**. Enter: `The Cedar trial enrolled 120 adults.`
 4. Press the arrow button. Open a source under the answer to see its page and highlighted text.
 5. Try: `The Cedar trial was funded by a pharmaceutical company.` The supplied documents do not establish this, so the claim should be withheld.
 6. With both Cedar PDFs selected, try: `The Cedar sleep-extension group improved its attention score by 12 points.` The primary report and corrected report disagree; inspect both.
 
-The sample PDFs are fictional examples written for testing. They are not real research or medical advice. Keep this browser's cookies to retain access to your workspace.
+The sample PDFs are fictional examples written for testing. They are not real research or medical advice. Sign in with the same account on another device to reopen your workspace. Never share your recovery code.
 
 ## What you can do
 
 | Feature | How it works |
 |---|---|
-| Upload multiple PDFs | Text is extracted page by page and stored on the server in a workspace linked to your browser cookie. |
+| Upload multiple PDFs | Text is extracted page by page and encrypted on the server in your account workspace. |
 | Search your sources | A real embedding model finds related passages. A separate reranker reorders them. |
 | Read source excerpts | Works without any paid API or generative model key. Clearly labelled as excerpts. |
 | Check a claim | Enter a statement. Local models check whether your selected documents support or contradict it. |
@@ -66,14 +72,16 @@ The sample PDFs are fictional examples written for testing. They are not real re
 | Follow the evidence | Open the original PDF, physical page number, exact quote and highlighted extracted text. |
 | Review uncertainty | See supported, contradicted, insufficient and possible-disagreement labels. |
 | Compare methods | With a generative model connected, run normal RAG, reranked RAG and verified RAG on the same question. |
-| Keep a research trail | Reopen recent questions from the collapsible sidebar, browse all saved answers, and download a JSON evidence record. |
+| Keep a research trail | Enable history if you want to reopen questions. Export an evidence record whenever you need one. |
 | Inspect experiments | The evidence lab shows actual fixture measurements, including failures. |
 
-## Start in one command with Docker
+## Start with Docker
 
-Install [Docker Desktop](https://www.docker.com/products/docker-desktop/), open a terminal in this folder, then run:
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/), open a terminal in this folder, then create a private vault key before starting:
 
 ```bash
+python -m pip install python-dotenv
+python scripts/create_vault_key.py
 docker compose up --build
 ```
 
@@ -91,11 +99,11 @@ The Docker files are supplied for reproducible deployment. Docker was not availa
 
 ## Connect Gemini safely
 
-Get your own key from [Google AI Studio](https://aistudio.google.com/apikey). In the app, open **AI settings**, choose **Gemini**, and enter the key in the password field.
+Get your own key from [Google AI Studio](https://aistudio.google.com/apikey). In **Privacy center**, enable **Allow reviewed Gemini requests**. Then open **AI settings**, choose **Gemini**, and enter the key in the password field. Every generation request opens a disclosure preview; it is sent only after your approval.
 
 - The entered key is kept in this tab's application memory. Refreshing clears that state. Do not paste keys into GitHub, screenshots or support messages.
 - It is sent through the backend only for Gemini generation and is not written to the database by the app. Local excerpts and claim checks do not send the entered key.
-- Your question, selected document passages and their file names are sent to Google. See [data use, retention and access limits](docs/PRIVACY.md).
+- Your reviewed question and selected passages are sent to Google. Source labels replace filenames; masking reduces obvious identifiers but cannot guarantee anonymity. See [data use, retention and access limits](docs/PRIVACY.md).
 - The default is `gemini-3.5-flash-lite`. Model access and free quotas depend on your Google account. You can change the model name.
 - For a private installation, the owner can instead set `GEMINI_API_KEY` in the server environment. Do not put it in React code, GitHub or a committed file.
 
@@ -116,6 +124,8 @@ pip install -r requirements-dev.txt
 cp .env.example .env
 # On Windows: Copy-Item .env.example .env
 ```
+
+Run `python scripts/create_vault_key.py` once. It creates the required encryption key in your ignored `.env` without printing it. Keep a private backup: replacing or losing this key makes stored content unreadable.
 
 Set `DATABASE_URL` in `.env` to your database connection string. For Neon, use the pooled URL for the app and the direct URL for `DATABASE_URL_UNPOOLED`.
 
@@ -145,6 +155,8 @@ Open the URL printed by Vite, usually **http://localhost:5173**. The frontend pr
 |---|---|---|
 | Interface | React, TypeScript, plain CSS, Vite | Document library, question box, evidence viewer and lab |
 | API | Python, FastAPI | Checks requests and coordinates the work |
+| Account security | Argon2id, opaque hashed sessions | Protects passwords and revocable sign-in sessions |
+| Content privacy | cryptography AES-256-GCM | Encrypts content before database writes; binds ciphertext to its row |
 | PDF reading | pypdf | Reads text and keeps physical page numbers |
 | Semantic search | Model2Vec POTION, 256 dimensions | Converts text into vectors that can be compared |
 | Vector database | PostgreSQL with pgvector | Stores documents, vectors, sessions and answers together |
@@ -179,18 +191,18 @@ Three things remain separate:
 
 ## Tests and research
 
-The focused privacy review on **16 October 2026** passed **30/30 live API assertions** against two disposable workspaces. It checked access separation, cookie settings, cache behavior and deletion; both workspaces were removed. [Raw results](docs/evidence/privacy-live-2026-10-16.json). This is a regression check, not a full security audit.
+The account/privacy application commit `5b352a7` passed **32 Python tests, 12 React tests and a production build** on native PostgreSQL 17/pgvector: [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/40434683240). Both database migrations ran successfully. See [validation](docs/VALIDATION.md) for exact coverage, logs and earlier runs. The [review PR](https://github.com/Sankalp-gupta1/veritas-ai/pull/1) contains this upgrade.
 
-The privacy update also passed **10 React tests** and **6 focused Python provider tests** locally. They check that a fictional key is sent only when needed and that the provider request contains the intended question/evidence fields. They do not exercise a real Gemini account.
+**The account upgrade is not yet verified on the public website.** Vercel project access is blocked; database migration, private vault configuration and a live account walkthrough remain release requirements. Setup below describes the new branch. The live link currently points to the earlier release.
 
-Release checks for this privacy update on [GitHub CI](https://github.com/Sankalp-gupta1/veritas-ai/actions/runs/38863177373): **23 Python tests and 10 React tests passed**, using native PostgreSQL 17/pgvector; the TypeScript/production build also passed. The deployed site also passed **84/84 API checks on 15 October**, followed by a desktop review of the updated chat interface on 16 October. See [the validation record](docs/VALIDATION.md) for exact coverage, failures fixed and remaining checks.
+Historical website checks on 15–16 October passed 84 API assertions and a separate 30-assertion privacy regression. Those used the earlier anonymous workspace design. They do not establish that the new account release is live or independently audited.
 
 ```bash
 python -m pytest tests/test_evidence.py -q
 npm test --prefix frontend
 python scripts/evaluate.py
 # Optional live boundary check; creates and removes its own fictional test data:
-python scripts/check_privacy_live.py --base-url https://veritas-ai-v8lw.vercel.app --out tmp/privacy-check.json
+python scripts/check_accounts_live.py --base-url https://YOUR-CONFIGURED-DEPLOYMENT.example --out tmp/accounts-check.json
 ```
 
 For full API tests, use a **disposable** PostgreSQL database, apply `scripts/migrate.py`, then set `VERITAS_INTEGRATION_TEST=1` before running `python -m pytest tests -q`. These tests create and delete their own workspaces. Never point the test command at a shared production database.
@@ -220,20 +232,20 @@ See [the experiment protocol](research/PROTOCOL.md) for controlled RAG compariso
 - Maximum 4 MB and 80 pages per PDF; 20 documents and 30 MB per workspace. The installation also has a 200 MB upload allowance.
 - Paragraph detection is heuristic. Complex columns, formulas and layouts can still extract incorrectly.
 - Small English models can miss valid support, misunderstand numbers or misread context. The fixture report includes failures.
-- A browser cookie is your workspace access key. There is no account recovery or cross-device login yet. Export evidence before clearing browser data.
-- Files are kept until explicitly deleted. There is no automatic retention cleanup. Deletion affects the active database; provider requests, backups and exported copies have separate lifetimes.
+- Email ownership is not verified; email is a sign-in identifier. Recovery uses a private code, not an email reset. MFA, passkeys and organization sharing are not implemented.
+- Files are kept until explicitly deleted. There is no automatic document-retention schedule. Deletion affects the active database; provider requests, backups and exported copies have separate lifetimes.
 - “Compare methods” needs an actual generative model. Source excerpts are not labelled as a generative RAG baseline.
 - Reranker and verifier scores are not calibrated probabilities of correctness.
 - Live Gemini/Ollama, Docker execution, mobile/keyboard accessibility, concurrent load and a large independent benchmark still need separate testing. See the dated validation record for exactly what passed.
 
 ## Assumptions and next steps
 
-This prototype assumes users have permission to process their documents, can inspect evidence themselves, and understand that a saved workspace is linked to a browser cookie. Its narrow scope is document research, not general personal advice or autonomous access to external accounts.
+This prototype assumes users have permission to process their documents, can inspect evidence themselves, and understand the server-processing and optional provider-disclosure boundaries. Its narrow scope is document research, not general personal advice or autonomous access to external accounts.
 
 | Area | What to build next | Why it matters |
 |---|---|---|
 | Research | Licensed corpus, frozen held-out questions and independent human labels | Measures hallucinations, citation correctness and answer coverage without treating the verifier as ground truth |
-| Privacy | Retention controls, account recovery, restricted database roles and row-level security | Gives users clearer control and adds protection beyond application queries |
+| Privacy | Verified email, MFA/passkeys, key rotation, restricted database roles and row-level security | Gives users clearer control and adds protection beyond application queries |
 | Reliability | Isolated PDF workers, load tests and backup/restore checks | Handles malformed files, larger workloads and operational failures |
 | Usability | OCR, better table extraction and broader language/accessibility tests | Makes more documents and devices usable |
 

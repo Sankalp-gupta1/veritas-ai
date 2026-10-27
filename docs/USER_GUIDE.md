@@ -1,12 +1,18 @@
 # Use VeritasAI without learning the code
 
-**[Open the live website](https://veritas-ai-v8lw.vercel.app/)** and wait for **Workspace ready**. No installation is needed. Source excerpts and claim checks need no AI API key.
+**[Open the live website](https://veritas-ai-v8lw.vercel.app/)**, create an account or sign in, and wait for **Workspace ready**. No installation is needed. Source excerpts and claim checks need no AI API key.
+
+## Create your private workspace
+
+Enter your **email**, a **password of at least 15 characters**, and **confirm password**. Use a unique passphrase. Save the recovery code shown on the next screen somewhere private; it lets you reset a forgotten password. There is no reset email and email ownership is not verified.
+
+If the browser has research from the older version, leave **Move this browser's existing research into my new account** checked to keep it. Sign in with the same account on another device to see the same workspace.
 
 ## Before uploading
 
-The live app stores PDFs and saved answers on its server. Local search and claim checking run there too; they do not run inside your phone. Gemini answers additionally send your question, selected text and file names to Google. An API key does not make that processing private to your computer.
+PDFs and extracted text are encrypted in the cloud database. The server decrypts them to work on your question; this is not end-to-end encryption. Start with authored samples or public documents. See [the privacy guide](PRIVACY.md) for the exact boundaries.
 
-Read [Where your data goes](PRIVACY.md) for key handling, provider terms and deletion limits. Use the fictional samples or public documents first. Keep your browser cookie to retain access; clearing it does not delete server data.
+**External AI starts off. Answer history starts off.** The green privacy badge at the top opens **Privacy center**. You can use source excerpts and claim checks without enabling Gemini or entering a key. Uploaded PDFs stay until you delete them, even when history is off.
 
 ## The three panels
 
@@ -16,7 +22,7 @@ Read [Where your data goes](PRIVACY.md) for key handling, provider terms and del
 
 **Right: the evidence.** Click a source under a claim to open this panel. “Evidence” shows extracted text with the exact quote highlighted. “PDF” opens the original page. The arrows change pages.
 
-Use **Close sidebar** to make more space, or **Open sidebar** to bring your library back. The most recent five questions appear in the sidebar. **Answer history** shows the full saved list.
+Use **Close sidebar** to make more space, or **Open sidebar** to bring your library back. When answer history is enabled, the most recent five saved questions appear in the sidebar. **Answer history** shows the full saved list.
 
 The **+** button inside the question box attaches PDFs. Click the source count to choose which documents to search. **Enter** sends the question; **Shift+Enter** adds a new line. A successful send clears the box. If a request fails, your draft stays there so you can retry.
 
@@ -30,7 +36,7 @@ On a small screen, the sidebar opens as a drawer. Press **Escape**, click outsid
 
 **Check a claim** checks a statement that you write. This works with local models and needs no generative API key. Keep the statement short and factual. For example: “The Cedar trial enrolled 120 adults.”
 
-To get an AI-written explanation, open **AI settings**, choose Gemini and add your key. Then return to **Ask your documents**.
+To get an AI-written explanation, first enable **Allow reviewed Gemini requests** in **Privacy center**. Open **AI settings**, choose Gemini and add your key. Ask a question, inspect the disclosure preview, then explicitly approve or cancel. No text is sent to Gemini just by opening the preview. Automatic masking can miss private information; read it before approving.
 
 ## What the labels mean
 
@@ -57,7 +63,7 @@ The models can make mistakes even on these examples. That is why the actual quot
 
 ## Compare methods
 
-Connect a generative model, write one question, and click **Compare methods**. The app runs:
+Connect a generative model, write one question, and click **Compare methods**. For Gemini, review both outgoing payloads and approve the request. The app runs:
 
 1. Standard RAG: semantic retrieval and a cited draft.
 2. Reranked RAG: the same candidate pool, reordered before drafting.
@@ -71,7 +77,11 @@ Click a method card to open its answer. A shorter answer is not automatically be
 
 Removing a PDF deletes its stored bytes, pages and chunks. It also deletes all saved answers in that workspace, because those answers may contain excerpts from the removed source. The app asks before doing this.
 
-Your browser cookie provides workspace access. There is no email login or recovery system in this version. If you clear your cookies or switch devices, the old workspace does not automatically follow you. Download anything you need first.
+Open **Privacy center** to turn history on/off, export your text and answers, clear saved answers, delete all workspace data or delete your account. Account deletion asks for your current password and the word DELETE. Deleting active data does not instantly remove provider backups or external copies.
+
+The small note below the question box says whether the next answer will be saved. When history is enabled, click it to make one answer temporary. Each completed answer also shows a privacy receipt: external AI used or not, and saved or not.
+
+Use the sign-out icon next to your email on shared computers. **Sign out everywhere** revokes all sessions. A password change replaces your recovery code and signs out other sessions. The workspace locks after 30 minutes without activity. Sign in again to continue; your uploaded files remain.
 
 ## Common problems
 
@@ -80,6 +90,9 @@ Your browser cookie provides workspace access. There is no email login or recove
 | Scanned PDF has no readable text | Run OCR in a PDF tool, then upload the searchable copy. |
 | File is too large | Export or split it into PDFs under 4 MB and 80 pages. |
 | No answer appears | Select at least one document and write at least five characters. |
+| External AI is blocked | Use source excerpts, or explicitly enable reviewed requests in Privacy center. |
+| Preview expired or already used | Ask again to create a fresh preview; each approval is valid once for ten minutes. |
+| Forgot password | Use your email and saved recovery code from the sign-in screen. |
 | Gemini rejects the key | Check the key and model access in Google AI Studio. |
 | Provider quota is exhausted | Wait, use your own permitted provider plan, or switch to local excerpts. |
 | Quote is invalid | The app refuses to trust it. Retry with a narrower question. |

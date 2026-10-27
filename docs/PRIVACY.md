@@ -1,107 +1,112 @@
-# Where your data goes
+# Your privacy, in plain English
 
-**Reviewed: 16 October 2026.** This explains the current VeritasAI application, not every possible installation. The public website runs on Vercel and stores application data in Neon PostgreSQL. The review examined source code, official provider policies and 30 checks on the live API using fictional data. It was not an independent security audit.
+**Account/privacy release, 19 October 2026.** This document describes the code in this release. [Validation](VALIDATION.md) records what has actually been tested and deployed. The hosted architecture is React/FastAPI on Vercel and PostgreSQL on Neon.
 
-## Can we promise that data will never leak?
+## What we can honestly promise
 
-**No.** Building the website ourselves does not remove hosting providers, database administrators, software vulnerabilities or the AI provider from the data flow. There is no end-to-end encryption: the application must read document text to search it and check claims. Someone with sufficient server or database access can technically read that content.
+VeritasAI gives you account access controls, encrypted content storage, external-AI blocking, a review before sharing, and deletion/export controls. These are implemented behaviours, not a “privacy score.”
 
-Using your own Gemini key still means using Google's AI. The key identifies the project making the request; it does not move Google's model onto your computer. A provider receiving data as part of a requested service is different from an unauthorized leak, but it is still a disclosure that you should understand.
+**We cannot promise zero leaks. This is not end-to-end encryption.** The app server decrypts your documents to search and check evidence. Someone who compromises the running server or obtains both the database and its vault key could read content. An authorized database operator can still read unencrypted metadata and vectors. A compromised browser, extension or stolen session can also defeat account protections.
 
-VeritasAI checks **whether claims have document evidence**. That is a different problem from **keeping documents confidential**. Neither a citation nor a “supported” label is a privacy guarantee.
+## What happens when you create an account?
 
-## What leaves your device?
+1. Enter your email, a passphrase of 15–128 characters, and the same passphrase again.
+2. The server stores an Argon2id password hash, not the password. Each account gets its own workspace.
+3. Your email is encrypted. A separate keyed fingerprint finds your account when you sign in.
+4. A random recovery code is shown once. Save it privately. Its hash is stored; the original code is not.
+5. **External AI and answer history start off.** Uploads still persist until you delete them.
 
-| Information | Where it goes in this hosted app | What the application keeps |
-|---|---|---|
-| Uploaded PDF and its file name | Your browser → Vercel API → Neon database | Original PDF bytes, file name, size, content hash and page count |
-| Extracted document text | Processed by models on the app server | Page text, searchable passages and numerical search vectors in PostgreSQL |
-| Question or claim | Your browser → app server | Successful results include the question, answer, evidence, model information and timings in saved history |
-| Gemini request, when selected | App server → Google Gemini API | The request includes your question, selected passage text, file names and passage IDs. Generated results are saved in your workspace. |
-| Key entered in AI settings | This tab's app memory → app server → Google, for Gemini generation | No database field or browser-storage write for this key exists in the reviewed application code |
-| Workspace access cookie | Browser and app server | The database stores a hash of the random token, not its original value |
-| Request counters | App server → database | Rate-limit bucket identifiers, time windows and counts; these contain no document text |
+Email is a sign-in identifier; ownership is **not verified**. We do not send verification or reset emails. Recovery needs your email and recovery code. Losing both password and recovery code can mean losing account access. MFA, passkeys and organization sharing are not implemented.
 
-“Local models” means models running **on the app server**. On the public website, that server is in the cloud, not inside your phone or browser.
+If this browser has an older anonymous workspace, account creation offers to move it into your new account. The transaction encrypts its old document and answer records and invalidates its old access cookie. Unclaimed legacy records remain inaccessible through the new private API; they are not silently assigned to an email address.
 
-### When is Google called?
+## Where each kind of data goes
 
-- **Source excerpts:** no Gemini generation request. Retrieval and ranking run on the server.
-- **Check a claim:** no Gemini generation request, even when Gemini is selected in settings. The server uses its local evidence checker.
-- **Ask your documents with Gemini:** sends the question and up to five selected passages, including file names, to Google.
-- **Compare methods with Gemini:** makes separate baseline and reranked generation requests. Verification reuses the reranked draft. Bounded retries can send a request again.
-
-The current Gemini integration does not upload the raw PDF file to Google. That does **not** make its text harmless: a short passage, question or file name can still contain personal information. Previously saved answers are not included as conversation memory. The application does not fine-tune models on uploads.
-
-Ollama is an optional self-hosting integration and is disabled in the public production configuration. For it to stay on your own machine, both `OLLAMA_URL` and the database must point to infrastructure you control. Choosing a cloud database or remote Ollama endpoint changes that boundary.
-
-## Google's data-use rules
-
-The [Gemini API terms](https://ai.google.dev/gemini-api/terms), checked on 16 October 2026, distinguish these cases:
-
-- **Unpaid services:** Google may use inputs and outputs for product improvement, with human review. The terms warn against submitting sensitive, confidential or personal information.
-- **Paid services:** prompts and responses are not used to improve Google's products. Gemini API paid status requires a Cloud project with active billing; owning a key alone does not establish it.
-- **Regional exception:** paid-service data-use terms also apply to unpaid services in the EEA, Switzerland and UK.
-
-Separately, Google's [abuse-monitoring policy](https://ai.google.dev/gemini-api/docs/usage-policies) describes retaining prompts, context and outputs for **55 days**, and authorized review of flagged content. A no-training provision does not mean zero retention or zero access.
-
-The review did not inspect any user's Google billing, optional data-sharing settings or agreements. Read the current terms for your project before deciding what to send. No real Gemini key or live Gemini request was used for this audit.
-
-## How the key is handled
-
-The settings key is held in React state. The app does not write it to `localStorage`, `sessionStorage` or its database. Refreshing clears it from application state. The updated interface sends it to the backend only for Gemini generation, not for local excerpts or claim checks.
-
-The browser uses the `X-Gemini-Key` header; the backend uses Google's `x-goog-api-key` header. It is not put in the URL or model prompt. HTTPS protects transport on the public site, but the backend still receives the key in memory.
-
-The reviewed application logger does not intentionally record this key, document bodies or provider error payloads. This review did **not** inspect hosting log drains, crash dumps, every dependency, browser extensions or account permissions. It therefore cannot promise that a credential is impossible to expose. A server-level `GEMINI_API_KEY`, if configured by an installation owner, is a separate secret with a different lifetime.
-
-## Access protection and its limits
-
-The application uses random workspace tokens, hashed token storage, workspace-scoped database queries, parameterized SQL, same-origin checks and private/no-store API responses. Production cookies have `Secure`, `HttpOnly` and `SameSite=Strict`. Original PDFs are served through an authenticated route rather than a public file folder.
-
-[Neon's security documentation](https://neon.com/docs/security/security-overview) describes encrypted database connections and encryption at rest. Those provider-managed controls do not prevent an authorized database role from reading records. This review did not audit the project's exact transport configuration, backup policy or administrative access.
-
-The cookie is effectively your workspace access credential. Browser compromise or cookie theft can defeat that boundary. There is no account recovery, cross-device login, token-rotation screen or database row-level security policy in this prototype. The PDF parser runs inside the API process, with size limits but without a separate sandbox worker.
-
-## What happens when you delete something?
-
-| Action | Current behavior |
+| Data | Processing and storage |
 |---|---|
-| Delete a document in the app | Removes its original PDF, pages and passages/vectors from the active database. Also removes **all saved answers in that workspace**, since they can contain source text. Other uploaded PDFs remain. |
-| Delete the workspace through `DELETE /api/workspace` | Removes its workspace record, documents and saved answers, then clears the cookie. There is no whole-workspace delete button yet. |
-| Clear cookies or use another browser | Removes access from that browser; it does **not** delete server data. |
-| Let the cookie expire | The cookie lasts up to 90 days; this is **not** a database retention deadline. No automatic document cleanup job is implemented. |
-| Download an evidence export | The exported copy is outside the app. You must delete or protect it separately. |
+| Original PDF and filename | Browser → app server → encrypted fields in PostgreSQL. |
+| Extracted pages and passages | Processed in server memory; text is encrypted before storage. |
+| Search vectors | Stored as readable numerical vectors for database search. Treat them as sensitive derived data, not anonymous data. |
+| Question and answer | Processed on the server. Written to encrypted answer history only when history is on and the question is not temporary. |
+| Gemini request | Only after a one-use disclosure approval: reviewed question, selected passages, pseudonymous source labels and passage IDs → Google. |
+| API key entered in settings | Tab memory → app server → Google, only during generation. Not put in a URL, prompt, database, localStorage or sessionStorage by the app. |
+| Email | Encrypted email field plus a keyed lookup fingerprint. |
+| Password and recovery code | Argon2id password hash and a SHA-256 hash of the random recovery code. |
+| Session | Random token in an HttpOnly cookie; only its hash is stored in the database. |
+| Privacy activity | Fixed action names and times. No questions, document text, emails, keys or IP addresses. |
+| Operational metadata | IDs, relationships, content hashes, sizes, page numbers/labels, offsets, timings, model/verdict counts and request counters. Not all metadata is application-encrypted. |
 
-Deletion here means removal from the **active application database**. It cannot retract a request already sent to Google or guarantee immediate erasure from hosting logs, backups or provider systems. Their exact purge timelines were not verified. Rate-limit metadata is not linked by the workspace deletion cascade and can remain after deletion.
+“Local models” on the live website means **models on the hosted app server**, not models inside your laptop. The app has no advertising or third-party analytics scripts. Hosting providers can still produce operational logs; those provider-level settings have not been independently audited.
 
-## What was actually checked?
+## What encrypted storage means
 
-The [live result](evidence/privacy-live-2026-10-16.json) records **30/30 passing assertions**. Two disposable workspaces and one fictional PDF were used. Checks covered unauthorized access, cross-workspace reads and deletion, original-file integrity, cookie flags, response caching, deletion behavior and cleanup. Both temporary workspaces were removed.
+AES-256-GCM encrypts original PDFs, filenames, page/chunk text, saved questions, full saved answers/evidence, and email fields before database writes. Every write uses a fresh random nonce. The account/workspace, record and field identity are authenticated with the ciphertext, so copying encrypted data into a different record fails validation.
 
-Additional component tests check that the browser sends a fictional key only for Gemini generation. A controlled HTTP test checks the exact outbound provider fields and that the key stays out of the URL, prompt and saved result. These are regression tests, not evidence of Google's internal behavior.
+The vault key is a server secret stored separately from database records. Missing or malformed keys prevent encrypted writes; the app never falls back to plaintext for new content. The Privacy Center reports whether your current documents and saved answers have been encrypted.
 
-Not assessed: a full penetration test, all dependency vulnerabilities, every Git commit for secrets, provider account permissions, log-drain configuration, backup erasure, live Gemini processing or independent security certification. The tests cannot establish that no breach has ever happened.
+This protects content against a database-only disclosure when the attacker does not also obtain the vault key. It does not hide search vectors or all metadata, and does not protect against a compromised running application. It is not zero-knowledge encryption. Key rotation, KMS-backed keys and independent security review remain future work.
 
-See [validation](VALIDATION.md) for the dated software checks and [security notes](SECURITY.md) for implementation details.
+**Owners:** keep a secure backup of `VERITAS_VAULT_KEY`. Do not replace it on redeployment. Losing the key makes encrypted records unreadable. Keep development, test and production secrets separate.
 
-## A sensible way to use the prototype
+## How external-AI review works
 
-Start with public papers, the authored samples or documents you have permission to process. Remove personal identifiers from text **and file names** before uploading. Avoid passwords, identity documents, confidential contracts and private medical or financial records on this public prototype.
+**External AI blocked** is the default, enforced in Python. Supplying an API key or directly calling the API does not bypass it.
 
-For stronger control, run the app, database and optional model on your own infrastructure; configure access and network restrictions, keep dependencies patched, and set a retention policy. This reduces external transfers but still does not justify a 100% security claim.
+To use Gemini:
 
-An accurate project description is:
+1. Enable **Allow reviewed Gemini requests** in Privacy Center.
+2. Enter your key in AI settings and select Gemini.
+3. Ask a question. The app first retrieves passages locally and opens a preview. It has not called Gemini yet.
+4. Read the exact question and passages that will be shared. Source filenames are replaced with labels such as “Source 1.” Obvious email addresses, phone numbers and common secret patterns are masked.
+5. Check the approval box and submit, or cancel.
 
-> VeritasAI is an evidence-focused research assistant with server-side workspace isolation and optional external AI. Data handling depends on the hosting environment and selected provider. It does not offer a zero-leak guarantee.
+The server binds approval to the account workspace, question, selected documents, model, method, current privacy preferences and outgoing payload. Approval expires after ten minutes and can be used once. Editing the question, changing privacy settings or reusing the token requires a new preview.
 
-## Code behind this explanation
+The provider also receives the app's fixed research instructions and response schema. Comparisons show both generation payloads; the verified method reuses the reranked draft. Bounded provider retries may send the same approved payload again. The app does not upload the raw PDF to Gemini or send previous answers as chat memory.
 
-- [API routes and access checks](../app/main.py)
-- [Database schema and deletion relationships](../migrations/001_initial.sql)
-- [Provider request construction](../app/generation.py)
-- [Retrieval and comparison flow](../app/pipeline.py)
-- [Browser request handling](../frontend/src/App.tsx) and [AI settings](../frontend/src/SettingsDialog.tsx)
-- [Reproducible live privacy checks](../scripts/check_privacy_live.py)
+Masking is a **best-effort reduction**, not anonymization. It can miss names, addresses, document titles inside text, uncommon secrets or identifying combinations. It can also mask an innocent number. Read the preview. Restored placeholders are checked against original local evidence so that citation offsets still refer to your original page.
 
-Provider policies and deployment settings can change. The date at the top identifies the scope of this review.
+Turning external AI off blocks new requests and invalidates pending previews. It cannot recall a request already in flight or erase content already received by Google.
+
+### Google's separate terms
+
+The [Gemini API terms](https://ai.google.dev/gemini-api/terms), checked on 19 October 2026, distinguish unpaid and paid use. Unpaid content can be used for product improvement and human review; the terms say not to send sensitive, confidential or personal information. Paid-service prompts/responses are not used to improve Google's products. Gemini API paid status requires a project with active billing; possessing a key alone is not enough. Regional provisions also apply in the EEA, Switzerland and UK.
+
+Google's [abuse-monitoring documentation](https://ai.google.dev/gemini-api/docs/usage-policies) describes retention of prompts, context and outputs for 55 days and review of flagged content. No-training terms do not mean zero retention. Check your project's current terms, region, billing and optional data-sharing settings yourself.
+
+The app cannot inspect or control Google's internal processing. No live Gemini key was used in the automated privacy tests.
+
+## Sessions, locking and shared computers
+
+Production sessions use Secure, HttpOnly, SameSite=Strict host-only cookies. Only hashed random tokens are stored. The server rejects sessions after 30 minutes without an authenticated request or seven days from creation. The interface also locks after 30 minutes without user activity and clears its private React state. Active tabs can refresh a session while you work.
+
+**Sign out** removes the current server session. **Sign out everywhere**, password change and account recovery revoke old sessions. A password change also replaces the recovery code. Browser tabs receive a sign-out notification; an expired/revoked token cannot open private API routes.
+
+Network failures can prevent immediate server-side logout. An offline screen lock is not remote revocation. On a shared computer, confirm logout succeeded and close the browser. Downloads remain on that computer unless you remove them.
+
+## History and deletion
+
+| Action | Effect on the active database |
+|---|---|
+| History off | New questions/results are not added to answer history. Existing saved answers remain. Uploads remain. |
+| Temporary answer | Does not save that answer even if history is enabled. |
+| Clear history | Deletes saved questions, answers and evidence. PDFs remain. |
+| Delete one PDF | Deletes its PDF, pages and vectors, and all saved workspace answers that may contain source text. |
+| Delete workspace data | Deletes all PDFs, pages, vectors and saved answers; your account remains. |
+| Delete account | Requires the current password and explicit UI confirmation; removes the workspace, account, sessions, content, answer history, consents and privacy activity. |
+| Clear cookies | Signs you out locally. It does not delete stored documents. |
+| Export data | Downloads private text and answers. Original PDFs remain available through signed-in download routes. Exports are outside the app's deletion controls. |
+
+Documents have no automatic expiry schedule. Privacy activity is displayed for 30 days; old entries are cleaned on later activity for that workspace. Expired sessions/consents and old rate counters are cleaned opportunistically, not by a guaranteed wall-clock purge job. Expiry checks block access before cleanup. Rate-counter metadata can outlive account deletion until cleanup.
+
+Deletion affects the **active database**. Provider backups, operational logs, local exports and content already sent to Google have separate lifetimes. An application deletion cannot guarantee immediate removal from those systems. Older database snapshots may contain plaintext records from before this encryption release.
+
+## What still needs work
+
+The implementation has focused automated tests, not an independent penetration test or compliance certification. Database row-level security and a restricted runtime role, isolated PDF workers, verified email, MFA/passkeys, key rotation, scheduled retention and backup-erasure validation remain future work. Infrastructure permissions, log drains, incident history and every dependency have not been exhaustively audited.
+
+An accurate description is:
+
+> VeritasAI is an evidence-focused research assistant with account isolation, encrypted content storage and server-enforced review before external AI disclosure. Users control history, exports and active-data deletion. The server processes documents, so it is not end-to-end encrypted or guaranteed leak-proof.
+
+See [security implementation](SECURITY.md), [file guide](FILE_GUIDE.md), and [dated validation](VALIDATION.md).

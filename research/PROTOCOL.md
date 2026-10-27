@@ -34,7 +34,9 @@ With the application running and a real Gemini key supplied in your environment:
 python research/run_experiment.py --out research/private-runs/run-001
 ```
 
-The command uploads authored PDFs into a disposable workspace, calls the real comparison endpoint, saves the results and removes the disposable workspace. A provider failure leaves partial raw outputs visible; it does not invent missing predictions.
+The command creates a disposable account, uploads authored PDFs, calls the real comparison endpoint, saves the results and deletes its account in cleanup. History stays off. For Gemini, it shows the exact outgoing masked question and passages and requires you to type `SHARE` for each question. The key is sent only on the approved generation request. A provider failure leaves partial raw outputs visible; it does not invent missing predictions.
+
+The privacy transformation is part of the experiment configuration: common identifiers are replaced with placeholders, source filenames become labels, and returned placeholders are restored before citation checks. Apply the same policy to every variant and retain its configuration with the raw outputs. Different context selections can produce different masked fields. Masking may affect answer quality, especially identifier-dependent questions; measure this separately before attributing an improvement to verification. Do not compare an older unmasked baseline against a masked verified variant as though verification were the only change.
 
 Review `claims_for_review.csv`. Variant names, model verdicts and scores are hidden from the review sheet. Assign:
 
